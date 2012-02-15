@@ -1,0 +1,4 @@
+src/userprog/build/
+src/examples/*
+*~*
+*#*

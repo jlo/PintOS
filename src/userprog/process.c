@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "lib/string.h"xs
 
 #include "userprog/gdt.h"      /* SEL_* constants */
 #include "userprog/process.h"
@@ -176,12 +175,6 @@ process_execute (const char *command_line)
   return process_id;
 }
 
-
-/* Replace calls to STACK_DEBUG with calls to printf. All such calls
- * easily removed later by replacing with nothing. */
-#define STACK_DEBUG(...) printf(__VA_ARGS__)
-
-
 /* Replace calls to STACK_DEBUG with calls to printf. All such calls * easily removed later by replacing with nothing. */
 #define STACK_DEBUG(...) printf(__VA_ARGS__)
 
@@ -223,10 +216,13 @@ void* setup_main_stack(const char* command_line, void* stack_top)
   int argc;
   int total_size;
   int line_size = 0;
-  /* "cmd_line_on_stack" and "ptr_save" are variables that each stores   * one address, and at that address (the first) char (of a possible   * sequence) can be found. */
+  /* "cmd_line_on_stack" and "ptr_save" are variables that each store
+   * one address, and at that address (the first) char (of a possible
+   * sequence) can be found. */
   char* cmd_line_on_stack;
-  char* lennart;
-  strcpy(lennart, command_line);
+
+  char* lennart = malloc(strlen(command_line)+1);
+  strlcpy(lennart, command_line, strlen(command_line) + 1);
   /* calculate the bytes needed to store the command_line */
 
 
@@ -234,7 +230,7 @@ void* setup_main_stack(const char* command_line, void* stack_top)
   char *token;
   char **save_ptr;
   argc = 0;
-  for (token = strtok_r(command_line, " ", &save_ptr); token != NULL;
+  for (token = strtok_r(lennart, " ", &save_ptr); token != NULL;
        token = strtok_r(NULL, " ", &save_ptr)) {
     line_size += strlen(token) + 1;
 
@@ -242,6 +238,7 @@ void* setup_main_stack(const char* command_line, void* stack_top)
     argc++;
   }
   STACK_DEBUG("# line_size = %d\n", line_size);
+  strlcpy(lennart, command_line, strlen(command_line) + 1);
 
   /* round up to make it even divisible by 4 */
   line_size =  (line_size + 4 - 1) / 4 * 4;
@@ -254,22 +251,21 @@ void* setup_main_stack(const char* command_line, void* stack_top)
   /* calculate the size needed on our simulated stack */
 
   // antal tecken, pekare till varje ord + en terminator pekare,
-  // en pekare som pekar på argv[0], antal argument, esp  total_size = sizeof(char) * line_size + sizeof(char*) * (argc + 1)  + sizeof(char**) +
-  + sizeof(int)  + sizeof(int);
+  // en pekare som pekar på argv[0], antal argument, esp
+  total_size = sizeof(char) * line_size + sizeof(char*) * (argc + 1)  + sizeof(char**) +
+    + sizeof(int)  + sizeof(int);
 
   STACK_DEBUG("# total_size = %d\n", total_size);
 
   /* calculate where the final stack top will be located */
 
-  //???????????????????????
   esp = (struct main_args*)((unsigned)stack_top - total_size);
 
   /* setup return address and argument count */
   esp->ret = NULL;
   esp->argc = argc;
   /* calculate where in the memory the argv array starts */
-  esp->argv = (char**)((unsigned)esp + sizeof(int) * 2);
-  *esp->argv = (char*)((unsigned)esp->argv + 4);
+  esp->argv = (char**)((unsigned)esp + sizeof(int) * 3);
   /* calculate where in the memory the words is stored */
   cmd_line_on_stack = (char*)((unsigned)stack_top - line_size);
 
@@ -283,22 +279,28 @@ void* setup_main_stack(const char* command_line, void* stack_top)
        token = strtok_r(NULL, " ", &save_ptr)) {
     // Copies the C string pointed by source into the array pointed by destination,
     // including the terminating null character.
-    strcpy(cmd_line_on_stack, token);
+    strlcpy(cmd_line_on_stack, token, strlen(token) + 1);
 
-    *cur_argv_pointer = cmd_line_on_stack;
+    //printf("# esp1 = %08x\n", (unsigned)cur_argv_pointer);
+    //printf("# esp2 = %08x\n", (unsigned)cmd_line_on_stack);
+    //printf("# esp1 = %08x\n", (unsigned)*cur_argv_pointer);
+    //printf("# esp2 = %08x\n", (unsigned)*cmd_line_on_stack);
+
+    //cur_argv_pointer = cmd_line_on_stack;
+    *cur_argv_pointer++ = cmd_line_on_stack;
+
 
     cmd_line_on_stack += (strlen(token) + 1) * sizeof(char);
-    cur_argv_pointer = (char*)((unsigned)cur_argv_pointer + 4);
+    //          cur_argv_pointer = (char*)((unsigned)cur_argv_pointer + 4);
 
     STACK_DEBUG ("TOKEN: '%s'\n", token);
+    //argc++;
   }
 
   /* build argv array and insert null-characters after each word */
 
   return esp; /* the new stack top */
 }
-
-
 
 /* A thread function that loads a user process and starts it
    running. */
@@ -343,7 +345,9 @@ start_process (struct parameters_to_start_process* parameters)
          C-function expects the stack to contain, in order, the return
          address, the first argument, the second argument etc. */
 
-      HACK if_.esp -= 12; /* Unacceptable solution. */
+      //HACK if_.esp -= 12; /* Unacceptable solution. */
+      if_.esp = setup_main_stack(parameters->command_line, if_.esp);
+
 
       /* The stack and stack pointer should be setup correct just before
          the process start, so this is the place to dump stack content

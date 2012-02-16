@@ -1,0 +1,25 @@
+1) Det är väl trevligt med en fungerande stack!
+
+2) Det som händer med fulhacket är att stackpekaren kommer peka på toppen av processens stack. Vi vet sedan innan att en process behöver MINST 3 adresser (returadress, argc och argv). Om argument matas in till processen kommer den behöva mer än 3 adresser. Stackpekaren med fulhacket kommer  medföra att processen har plats för 3 adresser (3*4 = 12).
+
+Ändrar vi 12 till 8 innebär det att stackpekaren kommer peka på 2 adresser neråt i processens minne. Kör vi koden med -= 8 kommer dump_stack()
+att skriva ut de 2 adresser i processen och sedan försöka skriva ut minne utanför processen, som ligger i kernelminnet. 
+Det är strängt förbjudet och processen kommer att krascha.
+
+
+kernelminne
+kernelminne
+kernelminne
+-----------------------
+PHYS_BASE = 0xC0000000			processens första adress
+PHYS_BASE - 4				processens andra adress
+PHYS_BASE - 8				processens tredje adress
+PHYS_BASE - 12				processens fjärde adress
+------------------------
+
+
+3) TODO
+
+4) ----
+
+

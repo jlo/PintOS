@@ -18,8 +18,66 @@ PHYS_BASE - 12				processens fjärde adress
 ------------------------
 
 
-3) TODO
+3) ------
 
-4) ----
+4) ------
+
+
+5) 
+	Det andra värdet på stacken (stack top + 0) är felkod från processen.
+	Returvärdet läggs på (stack top + 1) av operativsystemet, eftersom processen inte har tillgång till minnet utanför stacken.
+
+	1) Verkar rimligt, 1 + 2 + 3 + 4 = 10
+	pintos -p ../../examples/sumargv -a sumargv -v -k --fs-disk=2 -- -f -q run 'sumargv 1 2 3 4'
+
+	# sumargv#3: start_process("sumargv 1 2 3 4") DONE
+	Executed an unknown system call!
+	Stack top + 0: 1
+	Stack top + 1: 10
+
+	---------
+
+	2)  
+	pintos -p ../../examples/sumargv -a sumargv -v -k --fs-disk=2 -- -f -q run 'sumargv 1000 200 30 4'
+
+	# sumargv#3: start_process("sumargv 1000 200 30 4") DONE
+	Executed an unknown system call!
+	Stack top + 0: 1
+	Stack top + 1: 1234
+
+
+	---------
+	3) 
+
+	pintos -p ../../examples/sumargv -a sumargv -v -k --fs-disk=2 -- -f -q run 'sumargv 36 64 100'
+	# sumargv#3: start_process("sumargv 36 64 100") DONE
+	Executed an unknown system call!
+	Stack top + 0: 1
+	Stack top + 1: 200
+
+	---------
+	4) 
+	pintos -p ../../examples/sumargv -a sumargv -v -k --fs-disk=2 -- -f -q run 'sumargv 2 3 5 7 11'
+	# sumargv#3: start_process("sumargv 2 3 5 7 11") DONE
+	Executed an unknown system call!
+	Stack top + 0: 1
+	Stack top + 1: 28
+
+	---------
+	pintos -p ../../examples/sumargv -a sumargv -v -k --fs-disk=2 -- -f -q run 'sumargv'
+	5) 
+	# sumargv#3: start_process("sumargv") DONE
+	Executed an unknown system call!
+	Stack top + 0: 1
+	Stack top + 1: 0
+
+
+	---------
+	6)
+	pintos -p ../../examples/sumargv -a sumargv -v -k --fs-disk=2 -- -f -q run 'sumargv 0'
+	# sumargv#3: start_process("sumargv 0") DONE
+	Executed an unknown system call!
+	Stack top + 0: 1
+	Stack top + 1: 0
 
 

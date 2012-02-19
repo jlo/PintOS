@@ -14,6 +14,8 @@
 #include "userprog/process.h"
 #include "devices/input.h"
 
+#define DEBUG_SYSCALL(format, ...) printf(format "\n", ##__VA_ARGS__)
+
 static void syscall_handler (struct intr_frame *);
 
 void
@@ -61,27 +63,26 @@ syscall_handler (struct intr_frame *f)
   */
   int32_t syscall_nr = *esp;
 
-  /*uint32_t eax = (uint32_t)f->eax;
-  printf("Return %i\n\n\n", eax);
-  f->eax = esp[1];
-*/
-  printf("Return %i\n\n\n", f->eax);
+  uint32_t eax = (uint32_t)f->eax;
+  DEBUG_SYSCALL("# Argument passed to syscall: %i\n\n", eax);
+//  printf("Return %i\n\n\n", f->eax);
 
   switch (syscall_nr)
   {
     case SYS_HALT:
-	printf("# Halt received, force shutdown...\n");
+	DEBUG_SYSCALL("# Halt received, force shutdown...\n");
 	power_off();
+    break;
+    case SYS_EXIT:
+	DEBUG_SYSCALL("# Exitting thread from syscall...\n");
+	thread_exit();
     break;
     default:
     {
-      printf ("Executed an unknown system call!\n");
-      
-      printf ("Stack top + 0: %d\n", esp[0]);
-      printf ("Stack top + 1: %d\n", esp[1]);
+      DEBUG_SYSCALL ("Executed an unknown system call (nr: %i)!\n", syscall_nr);
+      DEBUG_SYSCALL ("Stack top + 0: %d\n", esp[0]);
+      DEBUG_SYSCALL ("Stack top + 1: %d\n", esp[1]);
 
-
-      
       thread_exit ();
     }
   }

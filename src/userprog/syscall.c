@@ -16,10 +16,12 @@
 #include "devices/input.h"
 
 
-#define DEBUG_SYSCALL(format, ...)
-//  printf(format "\n", ##__VA_ARGS__)
+#define DEBUG_SYSCALL(format, ...) //printf(format "\n", ##__VA_ARGS__)
 
 static void syscall_handler (struct intr_frame *);
+
+int SYS_READ_handler(int32_t* esp);
+int SYS_WRITE_handler(int32_t* esp);
 
 void
 syscall_init (void) 
@@ -46,6 +48,82 @@ const int argc[] = {
   0
 };
 
+int SYS_READ_handler(int32_t* esp)
+{
+
+	int fd = *(esp + 1);
+	char* buffer = (char*)*(esp + 2);
+	int len = *(esp + 3);
+
+	// Default to error...
+	int retVal = -1;
+	if(fd ==  STDIN_FILENO){		
+		int writtenCharacters = 0;
+	      	while(writtenCharacters < len){
+			uint8_t c = input_getc ();
+
+			// Replace all \r with \n because output 
+			// will be weird looking otherwise
+			if(c == '\r'){
+				c = '\n';
+			}
+
+			*(buffer + writtenCharacters) = c;
+
+			// Print typed character on screen
+			putbuf(&c, 1);
+			writtenCharacters++;	
+		}
+		// We read data, set return value to bytes read.
+		retVal = writtenCharacters;
+	}
+	return retVal;
+}
+
+int SYS_WRITE_handler(int32_t* esp)
+{
+	// Default to error...
+	int retVal = -1;
+
+	int fd = *(esp + 1);
+	char* buffer = (char*)*(esp + 2);
+	int len = *(esp + 3);
+
+	if(fd == STDOUT_FILENO){	
+	
+		putbuf(buffer, len);
+		// Since we wrote data, set return value to bytes written.
+		retVal = len;
+	}
+
+	return retVal;
+}
+
+char* get_system_call_name(int32_t syscall_number)
+{
+   char* system_calls[SYS_NUMBER_OF_CALLS];
+   
+   int i = 0;
+   for(i = 0; i < SYS_NUMBER_OF_CALLS; i++){
+	system_calls[i] = "Unknown system call!"; 
+   }
+   
+   system_calls[SYS_HALT] = "SYS_HALT";
+   system_calls[SYS_EXIT] = "SYS_EXIT";
+   system_calls[SYS_EXEC] = "SYS_EXEC";
+   system_calls[SYS_WAIT] = "SYS_WAIT";
+   system_calls[SYS_WAIT] = "SYS_READ";
+   system_calls[SYS_WRITE] = "SYS_WRITE";
+
+   // TODO: Add more syscall names whenever they are implemented
+
+   if(syscall_number > 0 && syscall_number < SYS_NUMBER_OF_CALLS){
+	return system_calls[syscall_number];
+   }
+  
+
+}
+
 static void
 syscall_handler (struct intr_frame *f) 
 {
@@ -65,11 +143,7 @@ syscall_handler (struct intr_frame *f)
    --------------------------------------
   */
   int32_t syscall_nr = *esp;
-
-  uint32_t eax = (uint32_t)f->eax;
-  DEBUG_SYSCALL("# Argument passed to syscall: %i\n\n", eax);
-//  printf("Return %i\n\n\n", f->eax);
-
+  DEBUG_SYSCALL("# SYSCALL received = %s\n", get_system_call_name(syscall_nr));
   switch (syscall_nr)
   {
     case SYS_HALT:
@@ -83,51 +157,16 @@ syscall_handler (struct intr_frame *f)
     case SYS_READ:
     {
 	DEBUG_SYSCALL("# RECEIVED SYS_READ \n");
-
-	//int read (int fd, void *buffer, unsigned length);
-/*
-	<buffer_pointer> ----> buffer
-	<syscallnr>
-	*/
-	int fd = eax;
-	char* buffer = *(esp + sizeof(int));
-	int len = *(esp + sizeof(int) * 2);
-
-	printf("Buffer: 0x%008x\n", buffer);
-	DEBUG_SYSCALL("# Buffer 0x%08x\n", buffer);
-
-
-	int i = 0;
-	//char* readBuffer = NULL;
-	//readBuffer = malloc(len + 1);
-	while(i < len){
-		uint8_t test = input_getc();
-		buffer[i] = test;
-		
-		putbuf(&buffer[i], 1);
-		
-		//DEBUG_SYSCALL("Test: %c", test);
-		//DEBUG_SYSCALL("# Buffer 0x%08x\n", (buffer + sizeof(int) * i));
-		i++;
-	}	
-//	printf("I: %i, len: %i", i, len);
-	f->eax = i;	
+	int retVal = SYS_READ_handler(esp);
+	f->eax = retVal;
 	break;
     }
     case SYS_WRITE:
     {
-/*
-	int fd = eax;
-	uint32_t* buffer = *(esp + sizeof(int));
-	int len = *(esp + sizeof(int) * 2);
-
-	/*DEBUG_SYSCALL("# FD: %i\nbuffer: 0x%08x\nlen: %i\n", fd, buffer, len);
-	DEBUG_SYSCALL("# RECEIVED SYS_WRITE \n");
-
-	const char* a = "A";
-	puts(a);
-	*/
-	
+	// Write to screen plz
+	//DEBUG_SYSCALL("SYS_WRITE received, FD=%i, buf=%s, len=%i", fd, buffer, len);
+	int retVal = SYS_WRITE_handler(esp);
+	f->eax = retVal;
 	break;
      }
     default:

@@ -45,15 +45,42 @@ static void
 syscall_handler (struct intr_frame *f) 
 {
   int32_t* esp = (int32_t*)f->esp;
+  /*
+   Any parameters passed to syscall will be above ESP, see illustration below.
+   Number of arguments each syscall expects is in argc[] array above.
+
+   syscall number is pointed to by ESP. 
+   --------------------------------------
+  		PHYS_BASE
+   		.................
+   		<param>
+		<param>
+   ESP --->  	<syscall_number>
   
-  switch ( 0 /* retrive syscall number */ )
+   --------------------------------------
+  */
+  int32_t syscall_nr = *esp;
+
+  /*uint32_t eax = (uint32_t)f->eax;
+  printf("Return %i\n\n\n", eax);
+  f->eax = esp[1];
+*/
+  printf("Return %i\n\n\n", f->eax);
+
+  switch (syscall_nr)
   {
+    case SYS_HALT:
+	printf("# Halt received, force shutdown...\n");
+	power_off();
+    break;
     default:
     {
       printf ("Executed an unknown system call!\n");
       
       printf ("Stack top + 0: %d\n", esp[0]);
       printf ("Stack top + 1: %d\n", esp[1]);
+
+
       
       thread_exit ();
     }

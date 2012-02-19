@@ -1,0 +1,31 @@
+1) Vilka funktioner är involverade i att avsluta en tråd? En process?
+	I kronologisk ordning:
+		- thread_exit ();
+		- process_cleanup();
+
+
+2) Vilken uppgift har respektive funktion?
+	- thread_exit() stänger av den nuvarande tråden medan process_cleanup() frigör minnet som processen har allokerats
+
+3) I vilken ordning exekveras de?
+	- Se fråga 1.
+
+4) I vilken fil är parametrarna till varje systemanrop specificerad?
+	- lib/syscall-nr.h
+	- I lib/syscall.c finns det specifierat hur många argument ett syscall kräver och på så vis
+	  kan man hämta ut alla med hjälp av EAX och storleken på pekare.
+
+5) Var i Pintos minne kan du hitta parametrarna?
+
+	- Vid ett systemanrop kommer syscall-handlern att köras. Till den kommer en interrupt frame att skickas
+	  som innehåller en pekare EAX. EAX pekar på första parametern och eftersom vi vet hur många argument varje 
+	  syscall tar genom uppslagning av systemanropsnummer i
+	  const int argc[] = {.....} 
+	  kan vi enkelt stega genom minnet och hitta parametrarna.
+
+6) Vad skall operativsystemet göra med parametern till exit (exit status)?
+	- OS ska ge spårutskrift beroende på vilken exit-status processen fick.
+	  
+7) Vad händer när main returnerar?
+	- Ett systemanrop med SYS_EXIT utförs. mains returvärde pekas på av EAX.
+

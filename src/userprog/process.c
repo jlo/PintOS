@@ -281,20 +281,12 @@ void* setup_main_stack(const char* command_line, void* stack_top)
     // including the terminating null character.
     strlcpy(cmd_line_on_stack, token, strlen(token) + 1);
 
-    //printf("# esp1 = %08x\n", (unsigned)cur_argv_pointer);
-    //printf("# esp2 = %08x\n", (unsigned)cmd_line_on_stack);
-    //printf("# esp1 = %08x\n", (unsigned)*cur_argv_pointer);
-    //printf("# esp2 = %08x\n", (unsigned)*cmd_line_on_stack);
-
-    //cur_argv_pointer = cmd_line_on_stack;
     *cur_argv_pointer++ = cmd_line_on_stack;
 
 
     cmd_line_on_stack += (strlen(token) + 1) * sizeof(char);
-    //          cur_argv_pointer = (char*)((unsigned)cur_argv_pointer + 4);
 
     STACK_DEBUG ("TOKEN: '%s'\n", token);
-    //argc++;
   }
 
   /* build argv array and insert null-characters after each word */

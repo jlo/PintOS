@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <syscall-nr.h>
 #include "userprog/syscall.h"
@@ -14,7 +15,9 @@
 #include "userprog/process.h"
 #include "devices/input.h"
 
-#define DEBUG_SYSCALL(format, ...) printf(format "\n", ##__VA_ARGS__)
+
+#define DEBUG_SYSCALL(format, ...)
+//  printf(format "\n", ##__VA_ARGS__)
 
 static void syscall_handler (struct intr_frame *);
 
@@ -77,6 +80,56 @@ syscall_handler (struct intr_frame *f)
 	DEBUG_SYSCALL("# Exitting thread from syscall...\n");
 	thread_exit();
     break;
+    case SYS_READ:
+    {
+	DEBUG_SYSCALL("# RECEIVED SYS_READ \n");
+
+	//int read (int fd, void *buffer, unsigned length);
+/*
+	<buffer_pointer> ----> buffer
+	<syscallnr>
+	*/
+	int fd = eax;
+	char* buffer = *(esp + sizeof(int));
+	int len = *(esp + sizeof(int) * 2);
+
+	printf("Buffer: 0x%008x\n", buffer);
+	DEBUG_SYSCALL("# Buffer 0x%08x\n", buffer);
+
+
+	int i = 0;
+	//char* readBuffer = NULL;
+	//readBuffer = malloc(len + 1);
+	while(i < len){
+		uint8_t test = input_getc();
+		buffer[i] = test;
+		
+		putbuf(&buffer[i], 1);
+		
+		//DEBUG_SYSCALL("Test: %c", test);
+		//DEBUG_SYSCALL("# Buffer 0x%08x\n", (buffer + sizeof(int) * i));
+		i++;
+	}	
+//	printf("I: %i, len: %i", i, len);
+	f->eax = i;	
+	break;
+    }
+    case SYS_WRITE:
+    {
+/*
+	int fd = eax;
+	uint32_t* buffer = *(esp + sizeof(int));
+	int len = *(esp + sizeof(int) * 2);
+
+	/*DEBUG_SYSCALL("# FD: %i\nbuffer: 0x%08x\nlen: %i\n", fd, buffer, len);
+	DEBUG_SYSCALL("# RECEIVED SYS_WRITE \n");
+
+	const char* a = "A";
+	puts(a);
+	*/
+	
+	break;
+     }
     default:
     {
       DEBUG_SYSCALL ("Executed an unknown system call (nr: %i)!\n", syscall_nr);

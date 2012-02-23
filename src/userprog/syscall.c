@@ -14,10 +14,11 @@
 #include "userprog/pagedir.h"
 #include "userprog/process.h"
 #include "devices/input.h"
+#include "userprog/flist.h"
 
 
 
-#define DEBUG_SYSCALL(format, ...) //printf(format "\n", ##__VA_ARGS__)
+#define DEBUG_SYSCALL(format, ...) printf(format "\n", ##__VA_ARGS__)
 
 static void syscall_handler (struct intr_frame *);
 
@@ -29,6 +30,7 @@ syscall_init (void)
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
+
 
 
 /* This array defined the number of arguments each syscall expects.
@@ -124,6 +126,10 @@ char* get_system_call_name(int32_t syscall_number)
   return 'E';
 }
 
+
+
+       
+
 static void
 syscall_handler (struct intr_frame *f)
 {
@@ -142,8 +148,11 @@ syscall_handler (struct intr_frame *f)
 
     --------------------------------------
   */
+
   int32_t syscall_nr = *esp;
   DEBUG_SYSCALL("# SYSCALL received = %s\n", get_system_call_name(syscall_nr));
+  
+  
   switch (syscall_nr)
     {
       //SYS_CREATE,                 /* Create a file. */
@@ -162,8 +171,8 @@ syscall_handler (struct intr_frame *f)
       break;
     case SYS_CREATE:
       {
-	//TODO: should filesys_init in filesys.c be called first, or does the
-	//system handle this?
+        //TODO: should filesys_init in filesys.c be called first, or does the
+        //system handle this?
 
         DEBUG_SYSCALL("# RECEIVED SYS_CREATE \n");
         bool success;
@@ -174,13 +183,33 @@ syscall_handler (struct intr_frame *f)
         success = filesys_create(name, initial_size);
 
         if(success) {
-	  DEBUG_SYSCALL("#SYS_CREATE - File with name: %s created. \n", name);
-          
-        } else {
-	  DEBUG_SYSCALL("#SYS_CREATE - filesys_create failed: file named NAME already exists  or internal memory allocation failed \n");
-	}
+          DEBUG_SYSCALL("#SYS_CREATE - File with name: %s created. \n", name);
 
-	f->eax = success;
+        } else {
+          DEBUG_SYSCALL("#SYS_CREATE - filesys_create failed: file named NAME already exists  or internal memory allocation failed \n");
+        }
+
+        f->eax = success;
+        break;
+      }
+    case SYS_OPEN:
+      {
+        DEBUG_SYSCALL("# RECEIVED SYS_OPEN \n");
+        char *name = (char*)*(esp + 1);
+        struct file *file;
+        file = filesys_open(name);
+
+        if(file != NULL) {
+          DEBUG_SYSCALL("#SYS_OPEN - File with name: %s created. \n", name);
+          //f->eax = inode_get_inumber (const struct inode *inode)
+	  flist_add_file(file,(int)thread_tid());
+        } else {
+          DEBUG_SYSCALL("#SYS_OPEN - filesys_open failed: no file named NAME exists or internal memory allocation failed \n");
+          f->eax = -1;
+
+
+        }
+
         break;
       }
     case SYS_READ:
@@ -192,6 +221,8 @@ syscall_handler (struct intr_frame *f)
       }
     case SYS_WRITE:
       {
+        //map_init(&open_file_table);
+
         // Write to screen plz
         //DEBUG_SYSCALL("SYS_WRITE received, FD=%i, buf=%s, len=%i", fd, buffer, len);
         int retVal = SYS_WRITE_handler(esp);

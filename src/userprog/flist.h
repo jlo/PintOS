@@ -1,5 +1,11 @@
-#ifndef _MAP_H_
-#define _MAP_H_
+#ifndef _FLIST_H_
+#define _FLIST_H_
+
+#include "filesys/file.h"
+//#include "threads/thread.h"
+
+// define bool
+#include "lib/stdbool.h"
 
 /* Place functions to handle a process open files here (file list).
    
@@ -31,5 +37,14 @@
    (probably when removed from the list(s)).
  */
 
+//typedef int tid_t;
+typedef int rw_pos;
+
+bool flist_init(void);
+int flist_add_file(struct file *file, const int process_id);
+struct file* flist_get_file(const int *fd, const int *process_id);
+bool flist_remove_file(const int *fd, const int *process_id);
+bool flist_remove_files(const int *process_id);
+void echo(void);
 
 #endif

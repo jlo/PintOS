@@ -6,6 +6,7 @@
 
 // define bool
 #include "lib/stdbool.h"
+struct file;
 
 /* Place functions to handle a process open files here (file list).
    

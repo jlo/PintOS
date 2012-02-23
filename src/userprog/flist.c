@@ -48,9 +48,19 @@ int flist_add_file(struct file *file, const int process_id)
   if(!inited) {
     flist_init();
   }
-
-  map_insert(&open_inode_table, file->inode);
+  
+  //i think a pointer to file->node should be saved here
+  map_insert(&open_inode_table, file);
   map_find(&open_inode_table, 0);
+
+
+
+
+
+
+
+
+
   //../../userprog/flist.c:49: varning: implicit declaration of function `malloc' ?????????????
   /*struct open_file_table *opf = (struct open_file_table*)malloc(sizeof(struct open_file_table));
 

@@ -42,8 +42,8 @@ int main(int argc, char* argv[])
 {
   int id = JUNK;
   int i, j;
-  
-  msg ( "* ------------------ write screen test ------------------ *" );
+  /*
+    msg ( "* ------------------ write screen test ------------------ *" );
   {
     char* msg = "Now displaying the arguments to main\n";
     int length = strlen (msg);
@@ -85,31 +85,32 @@ int main(int argc, char* argv[])
     verify ( length == result );    
   }
   end ( "* -------------------- press enter ---------------------- *" );
-
+  */
   
   msg ( "* ------------------ create file test ------------------- *" );
-  {
+  //{
     int success = JUNK;
     
     printf ("Will try to create 'test.txt'\n");
     success = create("test.txt", SIZE);    
     verify ( success );
-  }
+    /*}
   end ( "* -------------------- press enter ---------------------- *" );
-
+    */
   
   msg ( "* ------------------ open file test --------------------- *" );
   {
+    /*
     printf ("Will try to open 'non_existent_file'\n");
     id = open("non_existent_file");    
     verify ( id == -1 );
-    
+    */
     printf ("Will try to open 'test.txt'\n");
     id = open("test.txt");
-    verify ( id > 1 );
+    //verify ( id > 1 );
   }
   end ( "* -------------------- press enter ---------------------- *" );
-
+  /*
   
   msg ( "* ------------------ write file test -------------------- *" );
   {
@@ -276,6 +277,7 @@ int main(int argc, char* argv[])
     verify ( result == SIZE );
   }
   end ( "* -------------------- press enter ---------------------- *" );
+  */
   return 0;
 }
 

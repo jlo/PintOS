@@ -115,7 +115,7 @@ char* get_system_call_name(int32_t syscall_number)
   system_calls[SYS_EXIT] = "SYS_EXIT";
   system_calls[SYS_EXEC] = "SYS_EXEC";
   system_calls[SYS_WAIT] = "SYS_WAIT";
-  system_calls[SYS_WAIT] = "SYS_READ";
+  system_calls[SYS_READ] = "SYS_READ";
   system_calls[SYS_WRITE] = "SYS_WRITE";
 
   // TODO: Add more syscall names whenever they are implemented
@@ -162,11 +162,9 @@ syscall_handler (struct intr_frame *f)
 
 
     case SYS_HALT:
-      DEBUG_SYSCALL("# Halt received, force shutdown...\n");
       power_off();
       break;
     case SYS_EXIT:
-      DEBUG_SYSCALL("# Exitting thread from syscall...\n");
       thread_exit();
       break;
     case SYS_CREATE:
@@ -174,7 +172,6 @@ syscall_handler (struct intr_frame *f)
         //TODO: should filesys_init in filesys.c be called first, or does the
         //system handle this?
 
-        DEBUG_SYSCALL("# RECEIVED SYS_CREATE \n");
         bool success;
 
         char *name = (char*)*(esp + 1); //TODO: cast to (char*)? Why?
@@ -194,7 +191,6 @@ syscall_handler (struct intr_frame *f)
       }
     case SYS_OPEN:
       {
-        DEBUG_SYSCALL("# RECEIVED SYS_OPEN \n");
         char *name = (char*)*(esp + 1);
         struct file *file;
         file = filesys_open(name);
@@ -214,7 +210,6 @@ syscall_handler (struct intr_frame *f)
       }
     case SYS_READ:
       {
-        DEBUG_SYSCALL("# RECEIVED SYS_READ \n");
         int retVal = SYS_READ_handler(esp);
         f->eax = retVal;
         break;

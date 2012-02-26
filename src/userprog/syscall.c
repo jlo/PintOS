@@ -25,6 +25,10 @@ static void syscall_handler (struct intr_frame *);
 int SYS_READ_handler(int32_t* esp);
 int SYS_WRITE_handler(int32_t* esp);
 
+int SYS_CLOSE_handler(int32_t* esp);
+
+int SYS_REMOVE_handler(int32_t* esp);
+
 void
 syscall_init (void)
 {
@@ -63,7 +67,7 @@ int SYS_READ_handler(int32_t* esp)
 
   // Default to error...
   int retVal = -1;
-  if(fd ==  STDIN_FILENO){
+  if(fd == STDIN_FILENO){
     int writtenCharacters = 0;
     while(writtenCharacters < len){
       uint8_t c = input_getc ();
@@ -83,8 +87,18 @@ int SYS_READ_handler(int32_t* esp)
     // We read data, set return value to bytes read.
     retVal = writtenCharacters;
   }
-  else{
-	printf("\n\nFD: %i", fd);
+  else if(fd > 1){
+
+	// A file descriptor has been used.
+	struct file* file = flist_get_process_file(fd);
+	if(file != NULL){
+		retVal = file_read(file, buffer, len);
+		//printf("\n\nFile with fd %i found, retVal: %i, len: %i\n", fd, retVal, len);
+	}  else{
+		//printf("\nCouldnt find file with FD %i\n", fd);
+
+	}
+	
   }
   return retVal;
 }
@@ -103,6 +117,53 @@ int SYS_WRITE_handler(int32_t* esp)
     putbuf(buffer, len);
     // Since we wrote data, set return value to bytes written.
     retVal = len;
+  } else if(fd > 1){
+
+	// A file descriptor has been used.
+	struct file* file = flist_get_process_file(fd);
+	if(file != NULL){
+		retVal = file_write(file, buffer, len);
+		//printf("\n\nFile with fd %i found, retVal: %i, len: %i\n", fd, retVal, len);
+	}  else{
+		//printf("\nCouldnt find file with FD %i\n", fd);
+
+	}
+	
+  }
+
+  return retVal;
+}
+
+
+
+int SYS_REMOVE_handler(int32_t* esp)
+{
+  // Default to error...
+  int retVal = -1;
+
+  char *name = (char*)*(esp + 1);
+  /*if(fd > 1){
+
+	/// A file descriptor has been used.
+	//flist_remove_process_file(fd);	
+  }*/
+  retVal = filesys_remove(name);
+
+  return retVal;
+}
+
+
+int SYS_CLOSE_handler(int32_t* esp)
+{
+  // Default to error...
+  int retVal = -1;
+
+  int fd = *(esp + 1);
+  if(fd > 1){
+
+	// A file descriptor has been used.
+	flist_remove_process_file(fd);
+	
   }
 
   return retVal;
@@ -182,6 +243,8 @@ syscall_handler (struct intr_frame *f)
       power_off();
       break;
     case SYS_EXIT:
+
+      flist_close_process_files();
       thread_exit();
       break;
     case SYS_CREATE:
@@ -217,7 +280,7 @@ syscall_handler (struct intr_frame *f)
         if(file != NULL) {
           DEBUG_SYSCALL("# SYS_OPEN - File with name: '%s' created. \n", name);
 
-	  int fd = flist_add_file(file,(int)thread_tid());
+	  int fd = flist_add_file(file);
 	  retVal = fd;
         } else {
           DEBUG_SYSCALL("# SYS_OPEN - filesys_open failed: no file named \'%s\' exists or internal memory allocation failed \n", name);
@@ -234,12 +297,21 @@ syscall_handler (struct intr_frame *f)
         f->eax = retVal;
         break;
       }
+    case SYS_CLOSE:
+	{
+	int retVal = SYS_CLOSE_handler(esp);
+	f->eax = retVal;
+	
+	break;
+	}
+    case SYS_REMOVE:
+	{
+		int retVal = SYS_REMOVE_handler(esp);
+		f->eax = retVal;
+		break;
+	}
     case SYS_WRITE:
       {
-        //map_init(&open_file_table);
-
-        // Write to screen plz
-        //DEBUG_SYSCALL("SYS_WRITE received, FD=%i, buf=%s, len=%i", fd, buffer, len);
         int retVal = SYS_WRITE_handler(esp);
         f->eax = retVal;
         break;

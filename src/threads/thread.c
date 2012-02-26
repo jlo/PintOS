@@ -116,6 +116,7 @@ init_thread (struct thread *t, const char *name, int priority)
 
   /* YES! You may want add stuff here. */
   map_init(&(t->process_open_files));
+
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.

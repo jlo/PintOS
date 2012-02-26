@@ -7,7 +7,7 @@
 void map_init(struct map* m)
 {
 	list_init(&(m->content));
-	m->next_key = 0;
+	m->next_key = 2;
 }
 
 

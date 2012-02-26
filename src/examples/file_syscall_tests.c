@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
     verify ( id > 1 );
   }
   end ( "* -------------------- press enter ---------------------- *" );
-  /*
+  
   
   msg ( "* ------------------ write file test -------------------- *" );
   {
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
   }
   end ( "* -------------------- press enter ---------------------- *" );
 
-  
+
   msg ( "* ------------------ close file test -------------------- *" );
   {
     char buffer[128];
@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
   }
   end ( "* -------------------- press enter ---------------------- *" );
 
-  
+
   msg ( "* ------------------ remove file test ------------------- *" );
   {
     int success = JUNK;
@@ -225,7 +225,7 @@ int main(int argc, char* argv[])
     
   end ( "* -------------------- press enter ---------------------- *" );
 
-  
+/*  
   msg ( "* ---------------- seek/tell file test ------------------ *" );
   {
     char buffer[128];

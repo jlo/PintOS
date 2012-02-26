@@ -53,10 +53,13 @@ const int argc[] = {
 
 int SYS_READ_handler(int32_t* esp)
 {
-
+  
   int fd = *(esp + 1);
   char* buffer = (char*)*(esp + 2);
   int len = *(esp + 3);
+
+
+	DEBUG_SYSCALL(" # SYS_READ fd: %i ", fd);
 
   // Default to error...
   int retVal = -1;
@@ -79,6 +82,9 @@ int SYS_READ_handler(int32_t* esp)
     }
     // We read data, set return value to bytes read.
     retVal = writtenCharacters;
+  }
+  else{
+	printf("\n\nFD: %i", fd);
   }
   return retVal;
 }
@@ -105,25 +111,36 @@ int SYS_WRITE_handler(int32_t* esp)
 char* get_system_call_name(int32_t syscall_number)
 {
   char* system_calls[SYS_NUMBER_OF_CALLS];
-
   int i = 0;
   for(i = 0; i < SYS_NUMBER_OF_CALLS; i++){
-    system_calls[i] = "Unknown system call!";
+    //	system_calls[i] = "Syscall " + (char)syscall_number;
   }
 
   system_calls[SYS_HALT] = "SYS_HALT";
   system_calls[SYS_EXIT] = "SYS_EXIT";
+
   system_calls[SYS_EXEC] = "SYS_EXEC";
-  system_calls[SYS_WAIT] = "SYS_WAIT";
+
+  
+  system_calls[SYS_CREATE] = "SYS_CREATE";
+  system_calls[SYS_REMOVE] = "SYS_REMOVE";
+  system_calls[SYS_OPEN] = "SYS_OPEN";
+  system_calls[SYS_FILESIZE] = "SYS_FILESIZE";
+  system_calls[SYS_REMOVE] = "SYS_REMOVE";
   system_calls[SYS_READ] = "SYS_READ";
   system_calls[SYS_WRITE] = "SYS_WRITE";
+  system_calls[SYS_WAIT] = "SYS_WAIT";
+  system_calls[SYS_SEEK] = "SYS_SEEK";
+  system_calls[SYS_TELL] = "SYS_TELL";
+  system_calls[SYS_CLOSE] = "SYS_CLOSE";
+
 
   // TODO: Add more syscall names whenever they are implemented
 
   if(syscall_number > 0 && syscall_number < SYS_NUMBER_OF_CALLS){
     return system_calls[syscall_number];
   }
-  return 'E';
+  return "Unknown syscall";
 }
 
 
@@ -172,7 +189,7 @@ syscall_handler (struct intr_frame *f)
         //TODO: should filesys_init in filesys.c be called first, or does the
         //system handle this?
 
-        bool success;
+        bool success = false;
 
         char *name = (char*)*(esp + 1); //TODO: cast to (char*)? Why?
         unsigned initial_size = *(esp + 2);
@@ -183,7 +200,7 @@ syscall_handler (struct intr_frame *f)
           DEBUG_SYSCALL("#SYS_CREATE - File with name: %s created. \n", name);
 
         } else {
-          DEBUG_SYSCALL("#SYS_CREATE - filesys_create failed: file named NAME already exists  or internal memory allocation failed \n");
+          DEBUG_SYSCALL("#SYS_CREATE - filesys_create failed: file named \'%s\' already exists  or internal memory allocation failed \n", name);
         }
 
         f->eax = success;
@@ -195,22 +212,25 @@ syscall_handler (struct intr_frame *f)
         struct file *file;
         file = filesys_open(name);
 
-        if(file != NULL) {
-          DEBUG_SYSCALL("#SYS_OPEN - File with name: %s created. \n", name);
-          //f->eax = inode_get_inumber (const struct inode *inode)
-	  flist_add_file(file,(int)thread_tid());
-        } else {
-          DEBUG_SYSCALL("#SYS_OPEN - filesys_open failed: no file named NAME exists or internal memory allocation failed \n");
-          f->eax = -1;
 
+	int retVal = -1;
+        if(file != NULL) {
+          DEBUG_SYSCALL("# SYS_OPEN - File with name: '%s' created. \n", name);
+
+	  int fd = flist_add_file(file,(int)thread_tid());
+	  retVal = fd;
+        } else {
+          DEBUG_SYSCALL("# SYS_OPEN - filesys_open failed: no file named \'%s\' exists or internal memory allocation failed \n", name);
+          retVal = -1;
 
         }
-
+	f->eax = retVal;
         break;
       }
     case SYS_READ:
       {
         int retVal = SYS_READ_handler(esp);
+
         f->eax = retVal;
         break;
       }

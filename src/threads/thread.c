@@ -115,6 +115,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
 
   /* YES! You may want add stuff here. */
+  map_init(&(t->process_open_files));
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -188,7 +189,7 @@ thread_create (const char *name, int priority,
   struct switch_entry_frame *ef;
   struct switch_threads_frame *sf;
   tid_t tid;
-
+  
   /* NO! I do not think there's any reason to modify this function. */
   
   ASSERT (function != NULL);

@@ -5,7 +5,9 @@
 #include <list.h>
 #include <stdint.h>
 
-#include "userprog/flist.h"
+//#include "userprog/flist.h"
+#include "filesys/file.h"
+#include "userprog/map.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -82,6 +84,7 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -95,7 +98,9 @@ struct thread
     struct list_elem elem;              /* List element. */
 
     /* YES! You may want to add stuff. But make note of point 2 above. */
-
+    // processes opened files
+    struct map process_open_files;
+    
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */

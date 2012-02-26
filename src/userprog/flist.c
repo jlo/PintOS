@@ -5,13 +5,10 @@
 #include "map.h"
 //#include "filesys/file.h"
 #include "filesys/inode.h"
-//#include "thread/thread.h"
+#include "threads/thread.h"
 
 // Contains all open files, system-wide
 static struct map open_inode_table;
-
-// processes opened files
-static struct map process_open_files;
 
 static bool inited = false;
 
@@ -22,12 +19,11 @@ struct process_open_file_entry
   struct file *file;
 };
 
-
 //TODO: When should this be called?
 bool flist_init(void)
 {
   map_init(&open_inode_table);
-  map_init(&process_open_files);
+  //map_init(&process_open_files);
   map_insert(&open_inode_table, "A");
   map_insert(&open_inode_table, "A");
   inited = true;
@@ -52,30 +48,22 @@ int flist_add_file(struct file *file, const int process_id)
   if(!inited) {
     flist_init();
   }
-  int fd;
 
-  fd = (int)map_insert(&open_inode_table, file->inode);
-
-  printf("# fd: %d inode: %i", fd);//,*( file->inode)->removed);
-  //*(file->inode)->removed = true;
-  
+  // store open file in open_inode_table and return file descriptor
+  int fd = (int)map_insert(&open_inode_table, file->inode);
+      
   struct process_open_file_entry *pofe;
 
-  // TODO: dont forget to free this
-  // ../../userprog/flist.c:65: varning: implicit declaration of function `malloc' 
-  // Why do this happen?? Something with that we dont include right lib with malloc?
+  // allocate memory for entry in open_file_table
   pofe = (struct process_open_file_entry*)malloc(sizeof(struct process_open_file_entry));
-
-  //  printf("# h1i %08x \n", &(*file));
 
   pofe->fd = fd;
   pofe->file = file;
-  map_insert(&process_open_files, pofe);
   
-  //struct process_open_file_entry* s = (struct process_open_file_entry*)map_find(&process_open_files, 0);
-  //printf("# h2i %08x \n", &(*s->file));
+  struct thread* cur_thread = thread_current();  
+  map_insert(&(cur_thread->process_open_files), pofe);
   
-  return (int)fd;
+  return fd;
 }
 
 

@@ -18,16 +18,19 @@
 
 
 
-#define DEBUG_SYSCALL(format, ...) printf(format "\n", ##__VA_ARGS__)
+#define DEBUG_SYSCALL(format, ...) // printf(format "\n", ##__VA_ARGS__)
 
 static void syscall_handler (struct intr_frame *);
 
 int SYS_READ_handler(int32_t* esp);
 int SYS_WRITE_handler(int32_t* esp);
-
 int SYS_CLOSE_handler(int32_t* esp);
-
 int SYS_REMOVE_handler(int32_t* esp);
+
+
+int SYS_SEEK_handler(int32_t* esp);
+int SYS_FILESIZE_handler(int32_t* esp);
+int SYS_TELL_handler(int32_t* esp);
 
 void
 syscall_init (void)
@@ -169,6 +172,61 @@ int SYS_CLOSE_handler(int32_t* esp)
   return retVal;
 }
 
+int SYS_SEEK_handler(int32_t* esp)
+{
+	
+	int fd = *(esp + 1);
+	unsigned position = *(esp + 2);
+
+	//printf("# SYS_SEEK FD %i, POS: %i\n\n", fd, position);
+
+	if(fd > 1){
+
+		// A file descriptor has been used.
+		struct file* file = flist_get_process_file(fd);
+		if(file != NULL){
+			// File is considered OPEN if it is process open file table.
+			file_seek(file, (off_t)position);
+		}  
+	}
+	return 0;
+}
+
+
+int SYS_TELL_handler(int32_t* esp)
+{
+	int fd = *(esp + 1);
+	int retVal = 0;
+	if(fd > 1){
+
+		// A file descriptor has been used.
+		struct file* file = flist_get_process_file(fd);
+		if(file != NULL){
+			// File is considered OPEN if it is process open file table.
+			retVal = file_tell(file);
+		} 
+	
+	}
+	return retVal;
+}
+
+int SYS_FILESIZE_handler(int32_t* esp)
+{
+	int fd = *(esp + 1);
+	int retVal = 0;
+	if(fd > 1){
+
+		// A file descriptor has been used.
+		struct file* file = flist_get_process_file(fd);
+		if(file != NULL){
+			// File is considered OPEN if it is process open file table.
+			retVal = file_length(file);
+		} 	
+	}
+	return retVal;
+}
+
+
 char* get_system_call_name(int32_t syscall_number)
 {
   char* system_calls[SYS_NUMBER_OF_CALLS];
@@ -203,6 +261,7 @@ char* get_system_call_name(int32_t syscall_number)
   }
   return "Unknown syscall";
 }
+
 
 
 
@@ -316,6 +375,19 @@ syscall_handler (struct intr_frame *f)
         f->eax = retVal;
         break;
       }
+    case SYS_SEEK:
+	{
+	f->eax = SYS_SEEK_handler(esp);
+	break;
+	}
+    case SYS_TELL:
+
+	f->eax = SYS_TELL_handler(esp);
+	break;
+
+    case SYS_FILESIZE:
+	f->eax = SYS_FILESIZE_handler(esp);
+	break;
     default:
       {
         DEBUG_SYSCALL ("Executed an unknown system call (nr: %i)!\n", syscall_nr);

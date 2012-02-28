@@ -428,7 +428,9 @@ process_cleanup (void)
    * possibly before the prontf is completed.)
    */
   printf("%s: exit(%d)\n", thread_name(), status);
-
+  
+  
+  flist_close_process_files();
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   if (pd != NULL)

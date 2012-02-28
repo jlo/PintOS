@@ -312,7 +312,6 @@ thread_exit (void)
 {
   ASSERT (!intr_context ());
   DEBUG_thread_count_down();
-  flist_close_process_files();
 #ifdef USERPROG
   process_cleanup ();
 #endif

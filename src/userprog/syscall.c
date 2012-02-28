@@ -184,7 +184,7 @@ int SYS_SEEK_handler(int32_t* esp)
 
 		// A file descriptor has been used.
 		struct file* file = flist_get_process_file(fd);
-		if(file != NULL){
+		if(file != NULL && position <= file_length(file)){
 			// File is considered OPEN if it is process open file table.
 			file_seek(file, (off_t)position);
 		}  
@@ -303,7 +303,6 @@ syscall_handler (struct intr_frame *f)
       break;
     case SYS_EXIT:
 
-      flist_close_process_files();
       thread_exit();
       break;
     case SYS_CREATE:

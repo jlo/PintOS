@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "userprog/flist.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -311,11 +312,11 @@ thread_exit (void)
 {
   ASSERT (!intr_context ());
   DEBUG_thread_count_down();
-
+  flist_close_process_files();
 #ifdef USERPROG
   process_cleanup ();
 #endif
-
+  
   /* Just set our status to dying and schedule another process.
      We will be destroyed during the call to schedule_tail(). */
   intr_disable ();

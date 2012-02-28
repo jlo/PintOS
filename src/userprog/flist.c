@@ -13,12 +13,12 @@ int flist_add_file(struct file *file)
 {
   
   struct thread* cur_thread = thread_current();  
-  int fd = map_insert(&(cur_thread->process_open_files), file);
+  int fd = map_insert(&(cur_thread->process_open_files), (value_t)file);
   
   return fd;
 }
 
-struct file* flist_get_process_file(const int* fd)
+struct file* flist_get_process_file(const int fd)
 {
 	struct thread* cur_thread = thread_current();  
 	struct file* file = map_find(&(cur_thread->process_open_files), (key_t)fd);
@@ -38,7 +38,7 @@ void flist_remove_process_file(const int* fd)
 	}  
 }
 
-void close_process_open_file(key_t k, value_t v, int aux)
+void close_process_open_file(key_t k UNUSED, value_t v, int aux UNUSED)
 {
 	file_close(v);
 }

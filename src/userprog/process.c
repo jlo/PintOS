@@ -51,6 +51,7 @@ void process_print_list()
 struct parameters_to_start_process
 {
   char* command_line;
+  struct lock* lck;
 };
 
 static void
@@ -104,10 +105,17 @@ process_execute (const char *command_line)
 
   strlcpy_first_word (debug_name, command_line, 64);
 
+  struct lock* lck = malloc(sizeof(struct lock));
+  arguments.lck = lck;
+  lock_init(lck);
+  
   /* This creates a new thread to load and execute the new process.
      See threads/thread.c for more details. */
   thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
+  lock_acquire(lck);
+  free(lck);
+  // WAIT PLIZ!
 
   /* The task at hand is to create a new PROCESS. Above code created a
      new THREAD. The process is created in the new thread, by the

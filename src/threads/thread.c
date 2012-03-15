@@ -231,6 +231,10 @@ thread_create (const char *name, int priority,
         thread_current()->name,
         thread_current()->tid,
         name, tid);
+  struct parameters_to_start_process arguments;
+  arguments = (struct parameters_to_start_process) aux;
+
+  lock_release(arguments.lck);
   return tid;
 }
 

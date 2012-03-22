@@ -107,11 +107,11 @@ process_execute (const char *command_line)
 
   strlcpy_first_word (debug_name, command_line, 64);
 
-  
   /* This creates a new thread to load and execute the new process.
 	See threads/thread.c for more details. */
   thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
+
   if(thread_id != -1){
      // Thread was successfully created and this means that we will run start_process()
      // which is critical, cant accept interrupts. Therefore lock the semaphore.
@@ -481,4 +481,4 @@ process_activate (void)
   /* Set thread's kernel stack for use in processing
 interrupts. */
   tss_update ();
-}
+}	

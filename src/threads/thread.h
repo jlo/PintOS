@@ -100,6 +100,7 @@ struct thread
     /* YES! You may want to add stuff. But make note of point 2 above. */
     // processes opened files
     struct map process_open_files;
+    int pid;
     
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

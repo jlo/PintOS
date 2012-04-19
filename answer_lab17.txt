@@ -1,0 +1,131 @@
+Lägg till nya processen i listan före anropet av thread_create i process_execute
+
+1) Kommer den nya tråden att lägga till sin egen process i processlistan?
+Nej, det gör förälder-tråden, eftersom process_execute exekveras i föräldertråden.
+Lägger vi då till processen i listan när föräldertråden exekverar är det rimligtvis även föräldern som lägger till.
+
+
+2) Är förälderns process-id tillgängligt när informationen om den nya processen skall läggas till i
+processlistan?
+
+Ja, direkt. Med thread_current()->tid;
+
+3) Är den nya processens process-id tillgängligt vid den placeringen?
+Nej, det går absolut inte att få tag på. Detta beror på att den nya processens process-id genereras EFTER vi lägger till processen i listan.
+Processens ID returneras av thread_create()
+
+4) Processens id kommer att användas senare, när barnprocessen når process_cleanup, för
+att kunna ta bort processen ur processlistan. Är det garanterat att koden som lägger till den nya
+processen i processlistan alltid kommer exekveras innan den nya tråden exekverar
+process_cleanup? Detta är en viktig punkt.
+Ja, inga semaforer har använts än och koden körs sekventiellt. Därför borde rimligtvis koden som lägger till den nya processen i listan alltid att köras först. 
+
+5) Överensstämmer uppgiften att lägga till en ny process i processlistan med intentionen av den
+funktionen du utför det? (Se uppgift 10 för intentionen och ansvarsfördelningen mellan de olika tråd- och processfunktionerna, kort sammanfattat nedan.) 
+Ja, ganska bra. Vi anser dock att det inte överrensstämmer helt då processen inte har kommit igång / garanterat finns, före anropet av thread_create() i process_execute().
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Lägg till nya processen i listan inuti thread_create
+
+1) Kommer den nya tråden att lägga till sin egen process i processlistan?
+Nej, det gör förälder-tråden. Tittar vi på illustrationerna i laborationskompendiet ser vi att thread_create() körs på föräldratråden. 
+Det går även att bevisa genom att printa thread_current().
+
+2) Är förälderns process-id tillgängligt när informationen om den nya processen skall läggas till i
+processlistan?
+Ja, direkt. Med thread_current() 
+
+3) Är den nya processens process-id tillgängligt vid den placeringen?
+   Ja, direkt. Det beror dock på var i thread_create() vi lägger koden. Lämpligtvis efter följande rader:  
+   init_thread (t, name, priority);
+   tid = t->tid = allocate_tid ();
+ 
+4) Processens id kommer att användas senare, när barnprocessen når process_cleanup, för
+att kunna ta bort processen ur processlistan. Är det garanterat att koden som lägger till den nya
+processen i processlistan alltid kommer exekveras innan den nya tråden exekverar
+process_cleanup? Detta är en viktig punkt.
+
+Ja. Eftersom en tråd inte kan köra process_cleanup() förrän den är "startad" måste koden läggas innan följande rader:
+  /* Add to run queue. */
+  DEBUG_thread_count_up();
+  thread_unblock (t);
+
+5) Överensstämmer uppgiften att lägga till en ny process i processlistan med intentionen av den
+funktionen du utför det? (Se uppgift 10 för intentionen och ansvarsfördelningen mellan de olika tråd- och processfunktionerna, kort sammanfattat nedan.)
+Nej, inte alls. Intentionen med thread_create är
+att starta en funktion i en egen kernel-tråd och inget utöver det.
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Lägg till nya processen i listan inuti start_process
+
+1) Kommer den nya tråden att lägga till sin egen process i processlistan?
+Ja. Enligt illustrationen exekverar vi nu CHILD-tråden. Denna har påbörjat körningen med start_process() som sattes i thread_create().
+
+2) Är förälderns process-id tillgängligt när informationen om den nya processen skall läggas till i
+processlistan?
+Ja, det kan lätt ordnas. Det går att föra över information mellan trådar med hjälp av exempelvis följande struct:
+
+struct parameters_to_start_process
+{
+  char* command_line;
+  int proc_id;
+  struct semaphore sema;
+};
+
+3) Är den nya processens process-id tillgängligt vid den placeringen?
+Ja, direkt. I följande kod sparas processens process-id:
+
+
+struct parameters_to_start_process
+{
+  char* command_line;
+  int proc_id;
+  struct semaphore sema;
+};
+
+4) Processens id kommer att användas senare, när barnprocessen når process_cleanup, för
+att kunna ta bort processen ur processlistan. Är det garanterat att koden som lägger till den nya
+processen i processlistan alltid kommer exekveras innan den nya tråden exekverar
+process_cleanup? Detta är en viktig punkt.
+
+Ja, vi kan garantera att koden som lägger till processen i processlistan alltid kommer exekveras först, sålänge vi kör den innan vi släpper semaforen i start_process():
+
+  // Här ska vår processlista hanteras!!!!
+  // We have now executed our critical section, unlock semaphore.
+  sema_up(&parameters->sema); 
+
+5) Överensstämmer uppgiften att lägga till en ny process i processlistan med intentionen av den
+funktionen du utför det ? 
+
+Ja, absolut.
+
+Intentionen med funktionerna process_execute och start_process är just att starta en process, d.v.s. göra allt som
+behövs för att starta och registrera en ny en process korrekt. Därför känns det som att intentionen med start_process överrensstämmer.
+------------------------------------------------------------------------------------------------------------------------------------------------------
+Lägg till nya processen i listan efter anropet av thread_create i process_execute
+
+1) Kommer den nya tråden att lägga till sin egen process i processlistan?
+Nej, eftersom koden körs i föräldratråden.
+
+2) Är förälderns process-id tillgängligt när informationen om den nya processen skall läggas till i processlistan?
+Ja, direkt.
+
+3) Är den nya processens process-id tillgängligt vid den placeringen?
+Ja, direkt, då thread_create() returnerar den nya processens processid.
+
+4) Processens id kommer att användas senare, när barnprocessen når process_cleanup, för
+att kunna ta bort processen ur processlistan. Är det garanterat att koden som lägger till den nya
+processen i processlistan alltid kommer exekveras innan den nya tråden exekverar
+process_cleanup? Detta är en viktig punkt.
+
+Nej, den nya processen kan hinna avsluta innan den läggs till i listan. Se illustration bild 3 i labkompendiet.
+
+5) Överensstämmer uppgiften att lägga till en ny process i processlistan med intentionen av den
+funktionen du utför det? (Se uppgift 10 för intentionen och ansvarsfördelningen mellan de olika
+tråd- och processfunktionerna, kort sammanfattat nedan.)
+
+Ja, ganska bra, då intentionen med både start_process och process_execute är just att starta en process, d.v.s. göra allt som
+behövs för att starta och registrera en ny en process korrekt. 

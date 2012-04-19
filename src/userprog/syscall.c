@@ -32,6 +32,12 @@ int SYS_SEEK_handler(int32_t* esp);
 int SYS_FILESIZE_handler(int32_t* esp);
 int SYS_TELL_handler(int32_t* esp);
 
+
+int SYS_EXEC_handler(int32_t* esp);
+
+
+char* get_system_call_name(int32_t syscall_number);
+
 void
 syscall_init (void)
 {
@@ -176,7 +182,7 @@ int SYS_SEEK_handler(int32_t* esp)
 {
 	
 	int fd = *(esp + 1);
-	unsigned position = *(esp + 2);
+	int position = *(esp + 2);
 
 	//printf("# SYS_SEEK FD %i, POS: %i\n\n", fd, position);
 
@@ -227,6 +233,18 @@ int SYS_FILESIZE_handler(int32_t* esp)
 }
 
 
+int SYS_EXEC_handler(int32_t* esp)
+{
+	
+    char *command_line = (char*)*(esp + 1);
+	int retVal = 0;
+	
+    retVal = process_execute(command_line);	
+	return retVal;
+}
+
+
+
 char* get_system_call_name(int32_t syscall_number)
 {
   char* system_calls[SYS_NUMBER_OF_CALLS];
@@ -252,6 +270,7 @@ char* get_system_call_name(int32_t syscall_number)
   system_calls[SYS_SEEK] = "SYS_SEEK";
   system_calls[SYS_TELL] = "SYS_TELL";
   system_calls[SYS_CLOSE] = "SYS_CLOSE";
+  system_calls[SYS_PLIST] = "SYS_PLIST";
 
 
   // TODO: Add more syscall names whenever they are implemented
@@ -301,10 +320,21 @@ syscall_handler (struct intr_frame *f)
     case SYS_HALT:
       power_off();
       break;
+    case SYS_EXEC:
+    {
+      f->eax = SYS_EXEC_handler(esp);
+    }
+    break;
     case SYS_EXIT:
-
+    {
+      int exit_status = *(esp + 1);
+      process_exit(exit_status);
       thread_exit();
       break;
+    }
+    case SYS_PLIST:
+        process_print_list();
+    break;
     case SYS_CREATE:
       {
         //TODO: should filesys_init in filesys.c be called first, or does the

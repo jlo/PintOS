@@ -22,14 +22,24 @@
 #include "userprog/flist.h"
 #include "userprog/plist.h"
 
+#include "userprog/map.h"
+
 /* HACK defines code you must remove and implement in a proper way */
 #define HACK
+
+
+#define PLIST_DEBUG(...) printf(__VA_ARGS__)
+
+// #define debug  
+
+struct map process_list;
 
 
 /* This function is called at boot time (threads/init.c) to initialize
 * the process subsystem. */
 void process_init(void)
 {
+    map_init(&process_list);
 }
 
 /* This function is currently never called. As thread_exit does not
@@ -37,14 +47,16 @@ void process_init(void)
 * instead. Note however that all cleanup after a process must be done
 * in process_cleanup, and that process_cleanup are already called
 * from thread_exit - do not call cleanup twice! */
-void process_exit(int status UNUSED)
+void process_exit(int status)
 {
+    plist_set_exit_status(&process_list, thread_current()->pid, status);
 }
 
 /* Print a list of all running processes. The list shall include all
 * relevant debug information in a clean, readable format. */
 void process_print_list()
 {
+    plist_print_processes(&process_list); 
 }
 
 
@@ -87,6 +99,8 @@ process_execute (const char *command_line)
 */
   struct parameters_to_start_process arguments;
   sema_init(&arguments.sema, 0); 
+  
+  arguments.proc_id = thread_current()->pid;
 
   debug("%s#%d: process_execute(\"%s\") ENTERED\n",
         thread_current()->name,
@@ -112,6 +126,7 @@ process_execute (const char *command_line)
   thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
 
+
   if(thread_id != -1){
      // Thread was successfully created and this means that we will run start_process()
      // which is critical, cant accept interrupts. Therefore lock the semaphore.
@@ -120,6 +135,7 @@ process_execute (const char *command_line)
   else {
   	arguments.proc_id = -1;
   } 
+  
   /* The task at hand is to create a new PROCESS. Above code created a
 new THREAD. The process is created in the new thread, by the
 start_process function. In this function you shall return:
@@ -186,7 +202,8 @@ likely) events.
 }
 
 /* Replace calls to STACK_DEBUG with calls to printf. All such calls * easily removed later by replacing with nothing. */
-#define STACK_DEBUG(...) printf(__VA_ARGS__)
+#define STACK_DEBUG(...) 
+// printf(__VA_ARGS__)
 
 /* "struct main_args" represent the stack as it must look when * entering main. The only issue: argv must point somewhere...
 *
@@ -313,6 +330,10 @@ start_process (struct parameters_to_start_process* parameters)
   /* The last argument passed to thread_create is received here... */
   struct intr_frame if_;
   bool success;
+  
+  // We need to save parent pid before defaulting current process pid to ERROR.
+  int parent_pid = parameters->proc_id;
+  
   // Initialize process ID to ERROR and only if we could start process
   // correctly we set it to a non-error value.
   parameters->proc_id = -1;
@@ -338,6 +359,8 @@ start_process (struct parameters_to_start_process* parameters)
         thread_current()->tid,
         success);
 
+    
+
   if (success)
     {
       /* We managed to load the new program to a process, and have
@@ -350,8 +373,9 @@ start_process (struct parameters_to_start_process* parameters)
 	C-function expects the stack to contain, in order, the return
 	address, the first argument, the second argument etc. */
 
-      // Set process ID to threads ID.
-      parameters->proc_id = thread_current()->tid; 
+      // Set process ID to index in process_list. Thread ID is not equal to process ID!. 
+      parameters->proc_id = plist_add_process(&process_list, parent_pid, thread_current()->name);
+      
       //HACK if_.esp -= 12; /* Unacceptable solution. */
       if_.esp = setup_main_stack(parameters->command_line, if_.esp);
 
@@ -360,9 +384,15 @@ start_process (struct parameters_to_start_process* parameters)
 the process start, so this is the place to dump stack content
 for debug purposes. Disable the dump when it works. */
 
-      dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
+      // dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
 
     }
+    thread_current()->pid = parameters->proc_id;
+    
+    
+  //PLIST_DEBUG("\tStarted process (Name: %s, PID: %i, Parent PID: %i)\n", thread_current()->name, parameters->proc_id, parent_pid);
+
+  //plist_print_processes(&process_list);
 
   debug("%s#%d: start_process(\"%s\") DONE\n",
         thread_current()->name,
@@ -433,7 +463,7 @@ process_cleanup (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd = cur->pagedir;
-  int status = -1;
+  int status = plist_get_exit_status_by_pid(&process_list, cur->pid);
 
   debug("%s#%d: process_cleanup() ENTERED\n", cur->name, cur->tid);
 
@@ -446,7 +476,7 @@ process_cleanup (void)
 */
   printf("%s: exit(%d)\n", thread_name(), status);
   
-  
+  plist_remove_process(&process_list, cur->pid);
   flist_close_process_files();
   /* Destroy the current process's page directory and switch back
 to the kernel-only page directory. */

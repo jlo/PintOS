@@ -46,4 +46,6 @@ bool isdir (int fd);
 int inumber (int fd);
 
 
+int plist(void);
+
 #endif /* lib/user/syscall.h */

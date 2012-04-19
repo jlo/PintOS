@@ -30,6 +30,9 @@ enum
     SYS_ISDIR,                  /* Tests if a fd represents a directory. */
     SYS_INUMBER,                /* Returns the inode number for a fd. */
     
+    /* Process system calls */
+    SYS_PLIST,
+    
     SYS_NUMBER_OF_CALLS
   };
 

@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
   while(--n >= 0);
   
   
-    plist();
+  plist();
   
   
   return 0;

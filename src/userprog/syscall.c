@@ -311,12 +311,7 @@ syscall_handler (struct intr_frame *f)
   
   switch (syscall_nr)
     {
-      //SYS_CREATE,                 /* Create a file. */
-      //SYS_OPEN,                   /* Open a file. */
-      //SYS_CLOSE,                  /* Close a file. */
-      //SYS_REMOVE,                 /* Delete a file. */
-
-
+  
     case SYS_HALT:
       power_off();
       break;
@@ -325,9 +320,19 @@ syscall_handler (struct intr_frame *f)
       f->eax = SYS_EXEC_handler(esp);
     }
     break;
+  
+    case SYS_WAIT:
+    {
+    
+      int child_pid = *(esp + 1);
+      f->eax = process_wait (child_pid);
+      break; 
+    }
+  
     case SYS_EXIT:
     {
       int exit_status = *(esp + 1);
+      // printf("SYS_EXIT: exit status for PID %d: %d\n", thread_current()->pid, exit_status);
       process_exit(exit_status);
       thread_exit();
       break;
@@ -413,6 +418,7 @@ syscall_handler (struct intr_frame *f)
 
 	f->eax = SYS_TELL_handler(esp);
 	break;
+	
 
     case SYS_FILESIZE:
 	f->eax = SYS_FILESIZE_handler(esp);

@@ -7,6 +7,23 @@
 
 
 
+struct process
+{
+    // Reminder: free memory if you add more dynamically allocated
+    // memory.
+    int pid;
+    int parent_pid;
+
+
+    // This memory is allocated dynamically and can be used an example on how
+    // to do in future if more data needs to be added.
+    char* name;
+    int exit_status;    
+    int alive, parent_alive;        
+    bool has_exited;
+};
+
+
 /* Place functions to handle a running process here (process list).
    
    plist.h : Your function declarations and documentation.
@@ -47,6 +64,12 @@ bool remove(key_t k, value_t v, int removed_process_pid);
 
 void plist_set_exit_status(struct map* process_list, int pid, int status);
 int plist_get_exit_status_by_pid(struct map* process_list, int pid);
+
+
+int plist_get_alive_status_by_pid(struct map* process_list, int pid);
+
+
+bool is_child_of(struct map* process_list, int parent_pid, int child_pid);
 
 #endif
 

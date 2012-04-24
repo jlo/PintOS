@@ -49,7 +49,9 @@ void process_init(void)
 * from thread_exit - do not call cleanup twice! */
 void process_exit(int status)
 {
-    plist_set_exit_status(&process_list, thread_current()->pid, status);
+    plist_set_exit_status(&process_list, thread_current()->pid, status);  
+    
+   
 }
 
 /* Print a list of all running processes. The list shall include all
@@ -64,7 +66,8 @@ struct parameters_to_start_process
 {
   char* command_line;
   int proc_id;
-  struct semaphore sema;
+  struct semaphore sema;  
+  struct thread* parent;
 };
 
 static void
@@ -100,6 +103,7 @@ process_execute (const char *command_line)
   struct parameters_to_start_process arguments;
   sema_init(&arguments.sema, 0); 
   
+  arguments.parent = thread_current();
   arguments.proc_id = thread_current()->pid;
 
   debug("%s#%d: process_execute(\"%s\") ENTERED\n",
@@ -387,7 +391,8 @@ for debug purposes. Disable the dump when it works. */
       // dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
 
     }
-    thread_current()->pid = parameters->proc_id;
+    thread_current()->pid = parameters->proc_id;    
+    thread_current()->parent = parameters->parent;
     
     
   //PLIST_DEBUG("\tStarted process (Name: %s, PID: %i, Parent PID: %i)\n", thread_current()->name, parameters->proc_id, parent_pid);
@@ -436,13 +441,55 @@ process_wait (int child_id)
 {
   int status = -1;
   struct thread *cur = thread_current ();
-
+/*
+OLd debug
   debug("%s#%d: process_wait(%d) ENTERED\n",
         cur->name, cur->tid, child_id);
+        */
+  
+  debug("%s#%d: process_wait(%d) ENTERED\n",
+        cur->name, cur->pid, child_id);
   /* Yes! You need to do something good here ! */
-  debug("%s#%d: process_wait(%d) RETURNS %d\n",
-        cur->name, cur->tid, child_id, status);
+  
+  
+    
+  
+    
+    struct process* process = plist_find_process_by_pid(&process_list, child_id);
+    if(process == NULL){
+        // No process to wait for...
+        status = -1;
+    } 
+    else if(child_id == -1){
+        // Invalid child, should be caught by previous if cond...
+        status = -1;
+    }              
+    else if(process->parent_pid != cur->pid){    
+        // Why wait for a process which is not a child of current process?
+        status = -1;
+    }
+    else if(process->has_exited == 1){
+        // No need to wait() more than once.
+        status = -1; 
+    }  
+    else{
+        // The child process was OK to wait for.
+        // Lets lock current thread until child process calls exit() 
+        // or finishes executing, which then calls process_cleanup() and
+        // sema_up() the semaphore!                  
+        
+        printf("# \tsema_down called from thread ID %i\n", cur->pid);
+        
+        sema_down(&cur->wait_sema);
+        
+        status = plist_get_exit_status_by_pid(&process_list, child_id);
+        plist_remove_process(&process_list, child_id); 
+    }
 
+
+  debug("%s#%d: process_wait(%d) RETURNS %d\n\n\n",
+        cur->name, cur->pid, child_id, status);
+        
   return status;
 }
 
@@ -477,7 +524,9 @@ process_cleanup (void)
   printf("%s: exit(%d)\n", thread_name(), status);
   
   plist_remove_process(&process_list, cur->pid);
-  flist_close_process_files();
+  flist_close_process_files();  
+  
+
   /* Destroy the current process's page directory and switch back
 to the kernel-only page directory. */
   if (pd != NULL)
@@ -495,6 +544,15 @@ that's been freed (and cleared). */
     }
   debug("%s#%d: process_cleanup() DONE with status %d\n",
         cur->name, cur->tid, status);
+        
+        
+    int parent_pid = 0;
+    struct process* p = plist_find_process_by_pid(&process_list, thread_current()->pid);
+    if(p != NULL){        
+        parent_pid = p->parent_pid;
+        sema_up(&thread_current()->parent->wait_sema);
+        printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
+    }
 }
 
 /* Sets up the CPU for running user code in the current

@@ -51,7 +51,7 @@ void process_exit(int status)
 {
     plist_set_exit_status(&process_list, thread_current()->pid, status);  
     
-   
+
 }
 
 /* Print a list of all running processes. The list shall include all
@@ -448,9 +448,11 @@ OLd debug
         */
   
   debug("%s#%d: process_wait(%d) ENTERED\n",
-        cur->name, cur->pid, child_id);
+        cur->name, cur->tid, child_id);
   /* Yes! You need to do something good here ! */
   
+  
+    int a = 0;
   
     
   
@@ -478,17 +480,20 @@ OLd debug
         // or finishes executing, which then calls process_cleanup() and
         // sema_up() the semaphore!                  
         
-        printf("# \tsema_down called from thread ID %i\n", cur->pid);
+        // printf("# \tsema_down called from thread ID %i\n", cur->pid);
         
         sema_down(&cur->wait_sema);
         
         status = plist_get_exit_status_by_pid(&process_list, child_id);
-        plist_remove_process(&process_list, child_id); 
+        process->has_exited = true;
+        //plist_remove_process(&process_list, child_id); 
     }
-
-
+  
+  debug("%s#%d: process_wait(%d) RETURNS %d\n",
+        cur->name, cur->tid, child_id, status);
+/*
   debug("%s#%d: process_wait(%d) RETURNS %d\n\n\n",
-        cur->name, cur->pid, child_id, status);
+        cur->name, cur->pid, child_id, status);*/
         
   return status;
 }
@@ -523,10 +528,17 @@ process_cleanup (void)
 */
   printf("%s: exit(%d)\n", thread_name(), status);
   
-  plist_remove_process(&process_list, cur->pid);
+        
+  int parent_pid = 0;
+  struct process* p = plist_find_process_by_pid(&process_list, thread_current()->pid);
+  if(p != NULL){        
+      parent_pid = p->parent_pid;
+      // printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
+      
+  }
+  plist_remove_process(&process_list, cur->pid);      
   flist_close_process_files();  
   
-
   /* Destroy the current process's page directory and switch back
 to the kernel-only page directory. */
   if (pd != NULL)
@@ -545,14 +557,8 @@ that's been freed (and cleared). */
   debug("%s#%d: process_cleanup() DONE with status %d\n",
         cur->name, cur->tid, status);
         
-        
-    int parent_pid = 0;
-    struct process* p = plist_find_process_by_pid(&process_list, thread_current()->pid);
-    if(p != NULL){        
-        parent_pid = p->parent_pid;
-        sema_up(&thread_current()->parent->wait_sema);
-        printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
-    }
+  sema_up(&thread_current()->parent->wait_sema);
+   
 }
 
 /* Sets up the CPU for running user code in the current

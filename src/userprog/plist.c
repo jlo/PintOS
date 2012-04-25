@@ -28,7 +28,7 @@ int plist_add_process(struct map* process_list, int parent_pid, char* name)
     p->name = (char*)malloc(16);    
     memcpy(p->name, name, 16);
     
-    p->exit_status = 0;
+    p->exit_status = -1;
     
     p->alive = 1;    
     
@@ -60,7 +60,7 @@ void print_process(key_t k, value_t v, int aux UNUSED)
 
 void plist_print_processes(struct map* process_list) 
 {
-    printf ("%-20s %-20s %-20s %-20s %-20s %-20s\n","Name","PID","ParentPID", "Alive", "Parent alive", "Exit status");
+    printf ("# %-20s %-20s %-20s %-20s %-20s %-20s\n","Name","PID","ParentPID", "Alive", "Parent alive", "Exit status");
     map_for_each(process_list, print_process, 0);
 }
 
@@ -69,7 +69,7 @@ struct process* plist_find_process_by_pid(struct map* process_list, int pid)
     
 	struct process* p = (struct process*)map_find( process_list, pid);
     if(p == NULL){
-        // printf("# Error! plist_find_process_by_pid(): Could not find process with PID %i\n", pid);
+        printf("# Error! plist_find_process_by_pid(): Could not find process with PID %i\n", pid);
     }    
     return p;
 }
@@ -102,8 +102,7 @@ void plist_remove_process(struct map* process_list, int pid)
     if(p != NULL){
         p->alive = 0;        
     }    
-    map_remove_if(process_list, remove, pid);  
-    
+    map_remove_if(process_list, remove, pid);      
 }
 
 void plist_set_exit_status(struct map* process_list, int pid, int status)

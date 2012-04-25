@@ -84,6 +84,7 @@ int main(int argc, char* argv[])
         return j+1;
       }
       wait(pid[i]);      
+      // wait(pid[i]);      
     }
   }
   return 0;

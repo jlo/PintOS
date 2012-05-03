@@ -1,4 +1,5 @@
 #include "filesys/filesys.h"
+#include "threads/synch.h"
 #include <debug.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,7 +8,7 @@
 #include "filesys/inode.h"
 #include "filesys/directory.h"
 #include "devices/disk.h"
-#include "threads/synch.h"
+
 
 /* The disk that contains the file system. */
 struct disk *filesys_disk;
@@ -49,6 +50,9 @@ filesys_create (const char *name, off_t initial_size)
 {
   disk_sector_t inode_sector = 0;
   struct dir *dir = dir_open_root ();
+  //struct lock asd = dir->lock1x;
+  //lock_init(&dir->lock1x);
+ 
   bool success = (dir != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size)

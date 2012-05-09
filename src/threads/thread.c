@@ -117,7 +117,7 @@ init_thread (struct thread *t, const char *name, int priority)
 
   /* YES! You may want add stuff here. */
   map_init(&(t->process_open_files));
-    
+   
   sema_init(&t->wait_sema, 0);
   
   t->parent = NULL;

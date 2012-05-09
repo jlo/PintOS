@@ -4,8 +4,7 @@
 #include "userprog/map.h"
 
 #include "threads/thread.h"
-
-
+#include "threads/synch.h"
 
 struct process
 {
@@ -21,7 +20,12 @@ struct process
     int exit_status;    
     int alive, parent_alive;        
     bool has_exited;
-  bool should_wait;
+  
+    bool should_wait;
+  
+  
+  
+    struct semaphore wait_sema;
 };
 
 
@@ -72,6 +76,7 @@ int plist_get_exit_status_by_pid(struct map* process_list, int pid);
 int plist_get_alive_status_by_pid(struct map* process_list, int pid);
 
 
+void plist_force_remove_process(struct map* process_list, int pid);
 struct process* plist_get_process(struct map* process_list, int pid);
 
 #endif

@@ -47,6 +47,8 @@ int plist_add_process(struct map* process_list, int parent_pid, char* name)
     // Since process was just started BY its parent, we can assume parent is alive.
     p->parent_alive = 1;
         
+    sema_init(&p->wait_sema, 0);
+        
     lock_release(&plist_lock);
     return p->pid;
 }
@@ -170,10 +172,25 @@ int plist_get_alive_status_by_pid(struct map* process_list, int pid)
     struct process* p = internal_plist_find_process_by_pid(process_list, pid);
     if(p != NULL){
         
-        lock_release(&plist_lock);
+    	lock_release(&plist_lock);
         return p->alive;       
     }   
 
     lock_release(&plist_lock);
     return 0;
 }
+
+void plist_force_remove_process(struct map* process_list, int pid)
+{  
+
+    lock_acquire(&plist_lock);
+    struct process* p = internal_plist_find_process_by_pid(process_list, pid);
+    if(p != NULL){
+        p->alive = 0;      
+	    p->parent_alive = 0;
+    }    
+    map_remove_if(process_list, remove, pid);    
+    
+    lock_release(&plist_lock);  
+}
+

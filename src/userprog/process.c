@@ -28,8 +28,7 @@
 #define HACK
 
 
-#define PLIST_DEBUG(...) 
-// printf(__VA_ARGS__)
+#define PLIST_DEBUG(...) printf(__VA_ARGS__)
 
 // #define debug  
 
@@ -41,7 +40,6 @@ struct map process_list;
 void process_init(void)
 {
     map_init(&process_list);
-    plist_init();
 }
 
 /* This function is currently never called. As thread_exit does not
@@ -107,12 +105,12 @@ process_execute (const char *command_line)
   
   arguments.parent = thread_current();
   arguments.proc_id = thread_current()->pid;
-  /*
+
   debug("%s#%d: process_execute(\"%s\") ENTERED\n",
         thread_current()->name,
         thread_current()->tid,
         command_line);
-*/
+
   /* The new process, running in a new thread created below, need to
 * know the command line that started it. Since the command line
 * normally comes from the `parent' process, it must be copied from
@@ -198,12 +196,12 @@ likely) events.
 * the thread running start_process will not use the memory anymore!
 */
   free(arguments.command_line);
-/*
+
   debug("%s#%d: process_execute(\"%s\") RETURNS %d\n",
         thread_current()->name,
         thread_current()->tid,
         command_line, process_id);
-*/
+
   return process_id;
 }
 
@@ -453,35 +451,33 @@ OLd debug
         cur->name, cur->tid, child_id);
   /* Yes! You need to do something good here ! */
   
-    struct process* process = plist_get_process(&process_list, child_id);//plist_find_process_by_pid(&process_list, child_id);
+  
+  
+    struct process* process =  plist_get_process(&process_list, child_id);
     if(process == NULL){
         // No process to wait for...
         status = -1;
     } 
-    else if(child_id == -1){
+    /*else if(child_id == -1){
         // Invalid child, should be caught by previous if cond...
         status = -1;
-    }              
+	} */             
     else if(process->parent_pid != cur->pid){    
         // Why wait for a process which is not a child of current process?
         status = -1;
     }
-    else if(process->has_exited == 1){
-        // No need to wait() more than once.
-        status = -1; 
-    }  
     else{
         // The child process was OK to wait for.
         // Lets lock current thread until child process calls exit() 
         // or finishes executing, which then calls process_cleanup() and
         // sema_up() the semaphore!                  
         
-        sema_down(&cur->wait_sema);
-	      process->should_wait = true;
+        // printf("# \tsema_down called from thread ID %i\n", cur->pid);
+        
+        sema_down(&process->wait_sema);
         
         status = plist_get_exit_status_by_pid(&process_list, child_id);
-        process->has_exited = true;
-	
+	    plist_force_remove_process(&process_list, child_id);
     }
   
   debug("%s#%d: process_wait(%d) RETURNS %d\n",
@@ -528,10 +524,9 @@ process_cleanup (void)
   struct process* p = plist_get_process(&process_list, thread_current()->pid);
   if(p != NULL){        
       parent_pid = p->parent_pid;
-      printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
-      ASSERT(thread_current()->parent != NULL);
-      sema_up(&(thread_current()->parent->wait_sema));
-
+      // printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
+      
+    sema_up(&p->wait_sema);
   }
   plist_remove_process(&process_list, cur->pid);      
   flist_close_process_files();  
@@ -553,7 +548,8 @@ that's been freed (and cleared). */
     }
   debug("%s#%d: process_cleanup() DONE with status %d\n",
         cur->name, cur->tid, status);
-          
+        
+   
 }
 
 /* Sets up the CPU for running user code in the current

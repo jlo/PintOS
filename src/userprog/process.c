@@ -40,6 +40,7 @@ struct map process_list;
 void process_init(void)
 {
     map_init(&process_list);
+    plist_init();
 }
 
 /* This function is currently never called. As thread_exit does not
@@ -451,12 +452,6 @@ OLd debug
         cur->name, cur->tid, child_id);
   /* Yes! You need to do something good here ! */
   
-  
-    int a = 0;
-  
-    
-  
-    
     struct process* process = plist_find_process_by_pid(&process_list, child_id);
     if(process == NULL){
         // No process to wait for...
@@ -480,13 +475,10 @@ OLd debug
         // or finishes executing, which then calls process_cleanup() and
         // sema_up() the semaphore!                  
         
-        // printf("# \tsema_down called from thread ID %i\n", cur->pid);
-        
         sema_down(&cur->wait_sema);
         
         status = plist_get_exit_status_by_pid(&process_list, child_id);
         process->has_exited = true;
-        //plist_remove_process(&process_list, child_id); 
     }
   
   debug("%s#%d: process_wait(%d) RETURNS %d\n",
@@ -533,8 +525,10 @@ process_cleanup (void)
   struct process* p = plist_find_process_by_pid(&process_list, thread_current()->pid);
   if(p != NULL){        
       parent_pid = p->parent_pid;
-      // printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
+      printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
+      ASSERT(thread_current()->parent != NULL);
       
+      sema_up(&(thread_current()->parent->wait_sema));
   }
   plist_remove_process(&process_list, cur->pid);      
   flist_close_process_files();  
@@ -556,8 +550,7 @@ that's been freed (and cleared). */
     }
   debug("%s#%d: process_cleanup() DONE with status %d\n",
         cur->name, cur->tid, status);
-        
-  sema_up(&thread_current()->parent->wait_sema);
+          
    
 }
 

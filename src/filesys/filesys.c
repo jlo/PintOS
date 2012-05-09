@@ -9,9 +9,14 @@
 #include "filesys/directory.h"
 #include "devices/disk.h"
 
+#include "threads/synch.h"
+
 
 /* The disk that contains the file system. */
 struct disk *filesys_disk;
+
+static struct lock filesys_lock;
+
 
 static void do_format (void);
 
@@ -31,6 +36,8 @@ filesys_init (bool format)
     do_format ();
 
   free_map_open ();
+  
+  lock_init(&filesys_lock);
 }
 
 /* Shuts down the file system module, writing any unwritten data
@@ -48,11 +55,10 @@ filesys_done (void)
 bool
 filesys_create (const char *name, off_t initial_size) 
 {
+
+  //lock_acquire(&filesys_lock);
   disk_sector_t inode_sector = 0;
   struct dir *dir = dir_open_root ();
-  //struct lock asd = dir->lock1x;
-  //lock_init(&dir->lock1x);
- 
   bool success = (dir != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size)
@@ -60,6 +66,9 @@ filesys_create (const char *name, off_t initial_size)
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (dir);
+  
+  
+  //lock_release(&filesys_lock);
   
   return success;
 }
@@ -72,6 +81,8 @@ filesys_create (const char *name, off_t initial_size)
 struct file *
 filesys_open (const char *name)
 {
+
+  //lock_acquire(&filesys_lock);
   struct dir *dir = dir_open_root ();
   struct inode *inode = NULL;
   struct file *file = NULL;
@@ -82,6 +93,7 @@ filesys_open (const char *name)
 
   file = file_open (inode);
   
+  //lock_release(&filesys_lock);
   return file;
 }
 
@@ -98,10 +110,13 @@ filesys_close (struct file *file)
 bool
 filesys_remove (const char *name) 
 {
+
+  //lock_acquire(&filesys_lock);
   struct dir *dir = dir_open_root ();
   bool success = dir != NULL && dir_remove (dir, name);
   dir_close (dir); 
   
+  //lock_release(&filesys_lock);
   return success;
 }
 

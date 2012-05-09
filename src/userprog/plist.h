@@ -57,6 +57,8 @@ void print_process(key_t k, value_t v, int aux UNUSED);
 void plist_print_processes(struct map* process_list) ;
 
 
+void plist_init(void);
+
 struct process* plist_find_process_by_pid(struct map* process_list, int pid);
 void plist_remove_process(struct map* process_list, int pid);
 
@@ -67,9 +69,6 @@ int plist_get_exit_status_by_pid(struct map* process_list, int pid);
 
 
 int plist_get_alive_status_by_pid(struct map* process_list, int pid);
-
-
-bool is_child_of(struct map* process_list, int parent_pid, int child_pid);
 
 #endif
 

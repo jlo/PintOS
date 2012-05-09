@@ -21,6 +21,7 @@ static struct lock plist_lock;
 void plist_init(void)
 {
     lock_init(&plist_lock);
+    
 }
 
 int plist_add_process(struct map* process_list, int parent_pid, char* name)
@@ -30,6 +31,7 @@ int plist_add_process(struct map* process_list, int parent_pid, char* name)
     int index = map_insert(process_list, (value_t)p);
     p->pid = index;    
     p->parent_pid = parent_pid;
+    p->should_wait = false;
     
     // We need to allocate memory for name. Cannot just reference to argument
     // name since this refers to a memory address in thread struct, which
@@ -61,15 +63,19 @@ void print_process(key_t k, value_t v, int aux UNUSED)
 
 void plist_print_processes(struct map* process_list) 
 {
+
+    lock_acquire(&plist_lock);
     printf ("# %-20s %-20s %-20s %-20s %-20s %-20s\n","Name","PID","ParentPID", "Alive", "Parent alive", "Exit status");
     map_for_each(process_list, print_process, 0);
+
+    lock_release(&plist_lock);
 }
 
-struct process* plist_find_process_by_pid(struct map* process_list, int pid)
+struct process* plist_get_process(struct map* process_list, int pid)
 {
     
     lock_acquire(&plist_lock);
-	struct process* p = (struct process*)map_find( process_list, pid);
+    struct process* p = (struct process*)map_find( process_list, pid);
     if(p == NULL){
         printf("# Error! plist_find_process_by_pid(): Could not find process with PID %i\n", pid);
     }    
@@ -77,6 +83,22 @@ struct process* plist_find_process_by_pid(struct map* process_list, int pid)
     lock_release(&plist_lock);
     return p;
 }
+
+struct process* internal_plist_find_process_by_pid(struct map* process_list, int pid)
+{
+    
+    //lock_acquire(&plist_lock);
+    struct process* p = (struct process*)map_find( process_list, pid);
+    if(p == NULL){
+        printf("# Error! plist_find_process_by_pid(): Could not find process with PID %i\n", pid);
+    }    
+    
+    // lock_release(&plist_lock);
+    return p;
+}
+
+
+
 
 bool remove(key_t k UNUSED, value_t v, int removed_process_pid)
 {    
@@ -99,42 +121,59 @@ bool remove(key_t k UNUSED, value_t v, int removed_process_pid)
     return false;
 }
 
+
+
 void plist_remove_process(struct map* process_list, int pid)
 {  
 
-    struct process* p = plist_find_process_by_pid(process_list, pid);
+    lock_acquire(&plist_lock);
+    struct process* p = internal_plist_find_process_by_pid(process_list, pid);
     if(p != NULL){
         p->alive = 0;        
     }        
-    map_remove_if(process_list, remove, pid);   
+    map_remove_if(process_list, remove, pid);
+
+    lock_release(&plist_lock);   
 }
 
 void plist_set_exit_status(struct map* process_list, int pid, int status)
 {
-    struct process* p = plist_find_process_by_pid(process_list, pid);
+
+    lock_acquire(&plist_lock);
+    struct process* p = internal_plist_find_process_by_pid(process_list, pid);
     if(p != NULL){
         p->exit_status = status;       
     }    
     
+    lock_release(&plist_lock);
 }
 
 int plist_get_exit_status_by_pid(struct map* process_list, int pid)
 {
-    struct process* p = plist_find_process_by_pid(process_list, pid);
-    if(p != NULL){        
+
+    lock_acquire(&plist_lock);
+    struct process* p = internal_plist_find_process_by_pid(process_list, pid);
+    if(p != NULL){      
+
+    	lock_release(&plist_lock);  
         return p->exit_status;       
     }    
     
+    lock_release(&plist_lock);
     return -1;
 }
 
 int plist_get_alive_status_by_pid(struct map* process_list, int pid)
 {
 
-    struct process* p = plist_find_process_by_pid(process_list, pid);
+    lock_acquire(&plist_lock);
+    struct process* p = internal_plist_find_process_by_pid(process_list, pid);
     if(p != NULL){
         
+        lock_release(&plist_lock);
         return p->alive;       
     }   
+
+    lock_release(&plist_lock);
     return 0;
 }

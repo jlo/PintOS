@@ -20,6 +20,9 @@ free_map_init (void)
     PANIC ("bitmap creation failed--disk is too large");
   bitmap_mark (free_map, FREE_MAP_SECTOR);
   bitmap_mark (free_map, ROOT_DIR_SECTOR);
+
+
+  lock_init (&freemap_lock);
 }
 
 /* Allocates CNT consecutive sectors from the free map and stores
@@ -64,11 +67,15 @@ free_map_release (disk_sector_t sector, size_t cnt)
 void
 free_map_open (void) 
 {
+
+  lock_acquire(&freemap_lock);
   free_map_file = file_open (inode_open (FREE_MAP_SECTOR));
   if (free_map_file == NULL)
     PANIC ("can't open free map");
   if (!bitmap_read (free_map, free_map_file))
     PANIC ("can't read free map");
+
+  lock_release(&freemap_lock);
 }
 
 /* Writes the free map to disk and closes the free map file. */
@@ -83,8 +90,6 @@ free_map_close (void)
 void
 free_map_create (void) 
 {
-
-  lock_init (&freemap_lock);
 
   /* Create inode. */
   if (!inode_create (FREE_MAP_SECTOR, bitmap_file_size (free_map)))

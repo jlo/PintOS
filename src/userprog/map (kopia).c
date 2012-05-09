@@ -4,23 +4,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "threads/synch.h"
-
-static struct lock map_lock;
-
 void map_init(struct map* m)
 {
 	list_init(&(m->content));
 	m->next_key = 2;
-
-	lock_init(&map_lock);
 }
 
 
 key_t map_insert(struct map* m, value_t* v)
 {
-	
-	//lock_acquire(&map_lock);
 	struct association* as = (struct association*)malloc(sizeof(struct association));
 	
 	value_t* valPtr = (value_t*)malloc(sizeof(value_t));
@@ -30,8 +22,6 @@ key_t map_insert(struct map* m, value_t* v)
 	as->key = m->next_key++;
 	list_push_back(&m->content, &as->elem);
 
-
-	//lock_release(&map_lock);
 	return as->key;
 }
 
@@ -55,21 +45,15 @@ struct association* find_association_by_key(struct map* m, key_t key)
 
 value_t map_find(struct map* m, key_t k)
 {
-	
-	//lock_acquire(&map_lock);
 	struct association* s;
 	s = find_association_by_key(m, k);
 	
 	if(s != NULL)
 	{	
 		// Found
-
-	//	lock_release(&map_lock);
 		return s->value;
 	}
 	// Did not find element
-	
-	//lock_release(&map_lock);
 	return NULL;
 }
 
@@ -77,8 +61,6 @@ value_t map_find(struct map* m, key_t k)
 
 value_t map_remove(struct map* m, key_t k)
 {
-	
-//	lock_acquire(&map_lock);
 	struct association* s;
 	s = find_association_by_key(m, k);
 	if(s != NULL)
@@ -86,11 +68,9 @@ value_t map_remove(struct map* m, key_t k)
 		list_remove(&s->elem);
 		free(s);
 		
-//		lock_release(&map_lock);
 		return s->value;
 	}
 
-//	lock_release(&map_lock);
 	// Did not find element...
 	return NULL;
 }
@@ -99,8 +79,7 @@ value_t map_remove(struct map* m, key_t k)
 void map_for_each(struct map* m, 
 	void (*exec)(key_t k, value_t v, int aux), int aux) {
 	
-	
-	//lock_acquire(&map_lock);
+
 	struct list_elem* e;
 	struct association *assoc;
 	
@@ -109,15 +88,12 @@ void map_for_each(struct map* m,
 		assoc = list_entry(e, struct association, elem);
 		exec(assoc->key, (value_t)assoc->value, aux);
 	}
-
-	//lock_release(&map_lock);
 }
 
 void map_remove_if(struct map* m, bool (*cond)(key_t k, value_t v, int aux), int aux)
 {
 	struct list_elem* e;
 	
-	//lock_acquire(&map_lock);
 	for (e = list_begin(&m->content); e != list_end(&m->content);)
 	{
 		struct association *assoc = list_entry(e, struct association, elem);
@@ -129,8 +105,6 @@ void map_remove_if(struct map* m, bool (*cond)(key_t k, value_t v, int aux), int
  			e = list_next(e);
 		}
 	}
-
-	//lock_release(&map_lock);
 }
 
 /*

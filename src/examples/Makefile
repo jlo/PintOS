@@ -8,7 +8,7 @@ PROGS = cat cmp cp echo halt hex-dump ls mcat mcp mkdir pwd rm shell \
 	sumargv pfs pfs_reader pfs_writer dummy longrun \
 	child parent generic_parent longrun_interactive busy \
 	line_echo file_syscall_tests longrun_nowait shellcode \
-	crack overflow
+	crack overflow dir_stress create_file create_remove_file
 
 # Added test programs
 sumargv_SRC = sumargv.c
@@ -28,6 +28,9 @@ file_syscall_tests_SRC = file_syscall_tests.c
 shellcode_SRC = shellcode.c
 crack_SRC = crack.c
 overflow_SRC = overflow.c
+dir_stress_SRC = dir_stress.c
+create_file_SRC = create_file.c
+create_remove_file_SRC = create_remove_file.c
 
 # Should work from project 2 onward.
 cat_SRC = cat.c

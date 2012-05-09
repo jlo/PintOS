@@ -44,6 +44,7 @@ struct file* flist_get_process_file(const int fd);
 
 void flist_remove_process_file(const int* fd);
 
+struct file* internal_flist_get_process_file(const int fd);
 
 void close_process_open_file(key_t k UNUSED, value_t v, int aux UNUSED);
 void flist_close_process_files();

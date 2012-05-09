@@ -119,10 +119,11 @@ main (void)
   disk_init ();
   filesys_init (format_filesys);
   
-  dir_init();
 #endif
-  plist_init();
 
+  dir_init();
+  plist_init();
+  flist_init();
 
   printf ("Boot complete.\n");
   

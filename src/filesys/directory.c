@@ -8,14 +8,13 @@
 #include "threads/synch.h"
 
 
-static struct lock dir_lock;
+struct lock dir_lock;
 
 /* A directory. */
 struct dir 
   {
     struct inode *inode;                /* Backing store. */
     off_t pos;                          /* Current position. */
-    struct lock lock1x;
   };
 
 /* A single directory entry. */
@@ -45,23 +44,21 @@ dir_create (disk_sector_t sector, size_t entry_cnt)
 struct dir *
 dir_open (struct inode *inode) 
 {
-// S&G Lock?
-  lock_acquire(&dir_lock);
+  //lock_acquire(&dir_lock);
   struct dir *dir = calloc (1, sizeof *dir);
   if (inode != NULL && dir != NULL)
     {
       dir->inode = inode;
-      dir->pos = 0;
-// release
-	
-  	lock_release(&dir_lock);
+      dir->pos = 0;      
+      //lock_release(&dir_lock);
       return dir;
     }
   else
     {
       inode_close (inode);
       free (dir);
-  	lock_release(&dir_lock);
+    
+      //lock_release(&dir_lock);
       return NULL; 
     }
 }
@@ -86,16 +83,14 @@ dir_reopen (struct dir *dir)
 void
 dir_close (struct dir *dir) 
 {
-// acq
-  lock_acquire(&dir_lock);
+  //lock_acquire(&dir_lock);
   if (dir != NULL)
     {
       inode_close (dir->inode);
+
       free (dir);
     }
-  
-  lock_release(&dir_lock);
-// release
+   //lock_release(&dir_lock);
 }
 
 /* Returns the inode encapsulated by DIR. */
@@ -174,19 +169,21 @@ dir_add (struct dir *dir, const char *name, disk_sector_t inode_sector)
   ASSERT (name != NULL);
 
 	
-  lock_acquire(&dir_lock);
 
   /* Check NAME for validity. */
   if (*name == '\0' || strlen (name) > NAME_MAX){
-  
-    lock_release(&dir_lock);
     return false;
   }
     
   //  lock_acquire(&dir->lock1x);
+
+  lock_acquire(&dir_lock);
   /* Check that NAME is not in use. */
-  if (lookup (dir, name, NULL, NULL))
-    goto done;
+  if (lookup (dir, name, NULL, NULL)){
+    	//printf("# File with name %s already exists!\n\n\n", name);
+	goto done;
+
+  }
 
   /* Set OFS to offset of free slot.
      If there are no free slots, then it will be set to the
@@ -259,7 +256,6 @@ bool
 dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
 {
   struct dir_entry e;
-  // acquire
   lock_acquire(&dir_lock);
   while (inode_read_at (dir->inode, &e, sizeof e, dir->pos) == sizeof e) 
     {
@@ -267,14 +263,12 @@ dir_readdir (struct dir *dir, char name[NAME_MAX + 1])
       if (e.in_use)
         {
           strlcpy (name, e.name, NAME_MAX + 1);
-	  // release
-
-  	lock_release(&dir_lock);
+  	
+	  lock_release(&dir_lock);
           return true;
         } 
     }
 
-  	lock_release(&dir_lock);
-    // release
+  lock_release(&dir_lock);
   return false;
 }

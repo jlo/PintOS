@@ -28,7 +28,8 @@
 #define HACK
 
 
-#define PLIST_DEBUG(...) printf(__VA_ARGS__)
+#define PLIST_DEBUG(...) 
+// printf(__VA_ARGS__)
 
 // #define debug  
 
@@ -106,12 +107,12 @@ process_execute (const char *command_line)
   
   arguments.parent = thread_current();
   arguments.proc_id = thread_current()->pid;
-
+  /*
   debug("%s#%d: process_execute(\"%s\") ENTERED\n",
         thread_current()->name,
         thread_current()->tid,
         command_line);
-
+*/
   /* The new process, running in a new thread created below, need to
 * know the command line that started it. Since the command line
 * normally comes from the `parent' process, it must be copied from
@@ -197,12 +198,12 @@ likely) events.
 * the thread running start_process will not use the memory anymore!
 */
   free(arguments.command_line);
-
+/*
   debug("%s#%d: process_execute(\"%s\") RETURNS %d\n",
         thread_current()->name,
         thread_current()->tid,
         command_line, process_id);
-
+*/
   return process_id;
 }
 
@@ -452,7 +453,7 @@ OLd debug
         cur->name, cur->tid, child_id);
   /* Yes! You need to do something good here ! */
   
-    struct process* process = plist_find_process_by_pid(&process_list, child_id);
+    struct process* process = plist_get_process(&process_list, child_id);//plist_find_process_by_pid(&process_list, child_id);
     if(process == NULL){
         // No process to wait for...
         status = -1;
@@ -476,9 +477,11 @@ OLd debug
         // sema_up() the semaphore!                  
         
         sema_down(&cur->wait_sema);
+	      process->should_wait = true;
         
         status = plist_get_exit_status_by_pid(&process_list, child_id);
         process->has_exited = true;
+	
     }
   
   debug("%s#%d: process_wait(%d) RETURNS %d\n",
@@ -522,13 +525,13 @@ process_cleanup (void)
   
         
   int parent_pid = 0;
-  struct process* p = plist_find_process_by_pid(&process_list, thread_current()->pid);
+  struct process* p = plist_get_process(&process_list, thread_current()->pid);
   if(p != NULL){        
       parent_pid = p->parent_pid;
       printf("# \tsema_up from child PID %i (releasing parent PID %i semaphore)\n", thread_current()->pid, parent_pid);   
       ASSERT(thread_current()->parent != NULL);
-      
       sema_up(&(thread_current()->parent->wait_sema));
+
   }
   plist_remove_process(&process_list, cur->pid);      
   flist_close_process_files();  
@@ -551,7 +554,6 @@ that's been freed (and cleared). */
   debug("%s#%d: process_cleanup() DONE with status %d\n",
         cur->name, cur->tid, status);
           
-   
 }
 
 /* Sets up the CPU for running user code in the current

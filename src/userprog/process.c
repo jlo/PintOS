@@ -68,6 +68,8 @@ struct parameters_to_start_process
   int proc_id;
   struct semaphore sema;  
   struct thread* parent;
+
+  bool child_successfully_loaded;
 };
 
 static void
@@ -82,10 +84,13 @@ cannot be created. */
 int
 process_execute (const char *command_line)
 {
+  
+
   char debug_name[64];
   int command_line_size = strlen(command_line) + 1;
   tid_t thread_id = -1;
   int process_id = -1;
+
 
   /* The code here prepare the arguments to pass to start_process. */
 
@@ -119,22 +124,39 @@ process_execute (const char *command_line)
 * own memory.) You are welcome to figure out a cleaner way to to
 * this, that avoids copying the entire command line.
 */
+
   arguments.command_line = malloc(command_line_size);
   strlcpy(arguments.command_line, command_line, command_line_size);
+  strlcpy_first_word (debug_name, command_line, 64);	
 
+  printf("# Size of cmdline: %i\n", strlen(command_line));
+  printf("# command_line_size: %i\n", command_line_size); 
+  printf("# command line: %s\n", command_line);
+  printf("# debug name: %s\n", debug_name);
 
-  strlcpy_first_word (debug_name, command_line, 64);
-
+  arguments.child_successfully_loaded = false;
+/*
+  printf("# Command line: %s\n", arguments.command_line);
+  if(strcmp(arguments.command_line, "currupt-elf")){
+	printf("# Ignore this...\n");
+	return -1;
+   }*/
   /* This creates a new thread to load and execute the new process.
 	See threads/thread.c for more details. */
   thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
 
-
   if(thread_id != -1){
      // Thread was successfully created and this means that we will run start_process()
      // which is critical, cant accept interrupts. Therefore lock the semaphore.
      sema_down(&arguments.sema);
+
+     printf("# Parent executed child successfully? %i\n", arguments.child_successfully_loaded );
+     //if(arguments.child_successfully_loaded == false){
+	//return -1;
+	//process_exit(-1);
+	//thread_exit();
+     //}
   }
   else {
   	arguments.proc_id = -1;
@@ -383,6 +405,8 @@ start_process (struct parameters_to_start_process* parameters)
       //HACK if_.esp -= 12; /* Unacceptable solution. */
       if_.esp = setup_main_stack(parameters->command_line, if_.esp);
 
+	
+  	parameters->child_successfully_loaded = true;
 
       /* The stack and stack pointer should be setup correct just before
 the process start, so this is the place to dump stack content
@@ -392,7 +416,7 @@ for debug purposes. Disable the dump when it works. */
 
     }
     thread_current()->pid = parameters->proc_id;    
-    thread_current()->parent = parameters->parent;
+    //thread_current()->parent = parameters->parent;
     
     
   //PLIST_DEBUG("\tStarted process (Name: %s, PID: %i, Parent PID: %i)\n", thread_current()->name, parameters->proc_id, parent_pid);
@@ -413,8 +437,10 @@ Some simple examples:
 - File do not contain a valid program
 - Not enough memory
 */
+  
   if ( ! success )
-    {
+    {	
+      
       thread_exit ();
     }
 
@@ -458,10 +484,10 @@ OLd debug
         // No process to wait for...
         status = -1;
     } 
-    /*else if(child_id == -1){
+    else if(child_id == -1){
         // Invalid child, should be caught by previous if cond...
         status = -1;
-	} */             
+    }              
     else if(process->parent_pid != cur->pid){    
         // Why wait for a process which is not a child of current process?
         status = -1;

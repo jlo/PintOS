@@ -16,9 +16,71 @@
 #include "devices/input.h"
 #include "userprog/flist.h"
 
-
-
 #define DEBUG_SYSCALL(format, ...) // printf(format "\n", ##__VA_ARGS__)
+
+
+/* Kontrollera alla adresser från och med start till och inte med
+ * (start+length). */
+int verify_fix_length(void* start, int length)
+{
+	if(start == NULL  || start == 0 || start >= PHYS_BASE){
+		return false;
+	}
+	void* page_ptr = pg_round_down(start);
+	
+ 	while(page_ptr < start + length){
+		if(page_ptr == NULL  || page_ptr == 0 || page_ptr >= PHYS_BASE ){
+			return false;
+		}
+
+		void* success = pagedir_get_page(thread_current()->pagedir, page_ptr);
+		if(success == NULL){
+			return false;
+		}
+		page_ptr += PGSIZE;		
+	}
+	return true;
+}
+
+/* Kontrollera alla adresser från och med start till och med den
+ * adress som först inehåller ett noll-tecken, `\0'. (C-strängar
+ * lagras på detta sätt.) */
+
+int verify_variable_length(void* start)
+{
+	if(start == NULL || start == 0 || start >= PHYS_BASE) {
+		return false;
+	}
+	char* current_character;
+	void* last_addr = pg_round_down(start);
+	
+	// Is first page OK?
+	if(pagedir_get_page(thread_current()->pagedir, last_addr) == NULL){
+		return false;
+	}
+
+	for(current_character = start; ; current_character++){
+
+		// We have changed page, lets validate it. :-)
+		if(last_addr != pg_round_down(current_character)){
+			last_addr = pg_round_down(current_character);
+			if(last_addr == NULL || last_addr == 0 || last_addr >= PHYS_BASE){
+				return false;
+			}
+			if(pagedir_get_page(thread_current()->pagedir, last_addr) == NULL){
+				return false;
+			}
+		}
+		// If we have come this far, we know the current page is OK. 
+
+		if(*current_character == '\0'){
+			return true;
+ 		}
+
+	}
+	return false;
+
+}
 
 static void syscall_handler (struct intr_frame *);
 
@@ -45,6 +107,11 @@ syscall_init (void)
 }
 
 
+void sys_exit(int status)
+{
+	process_exit(status);
+	thread_exit();
+}
 
 /* This array defined the number of arguments each syscall expects.
    For example, if you want to find out the number of arguments for
@@ -72,7 +139,11 @@ int SYS_READ_handler(int32_t* esp)
   int len = *(esp + 3);
 
 
-	DEBUG_SYSCALL(" # SYS_READ fd: %i ", fd);
+  if(verify_fix_length(esp[2], esp[3]) == false){
+	sys_exit(-1);
+  }
+
+  DEBUG_SYSCALL(" # SYS_READ fd: %i ", fd);
 
   // Default to error...
   int retVal = -1;
@@ -102,11 +173,7 @@ int SYS_READ_handler(int32_t* esp)
 	struct file* file = flist_get_process_file(fd);
 	if(file != NULL){
 		retVal = file_read(file, buffer, len);
-		//printf("\n\nFile with fd %i found, retVal: %i, len: %i\n", fd, retVal, len);
-	}  else{
-		//printf("\nCouldnt find file with FD %i\n", fd);
-
-	}
+	}  
 	
   }
   return retVal;
@@ -120,7 +187,10 @@ int SYS_WRITE_handler(int32_t* esp)
   int fd = *(esp + 1);
   char* buffer = (char*)*(esp + 2);
   int len = *(esp + 3);
-
+	
+  if(verify_fix_length(esp[2], esp[3]) == false){
+	sys_exit(-1);
+  }
   if(fd == STDOUT_FILENO){
 
     putbuf(buffer, len);
@@ -132,10 +202,6 @@ int SYS_WRITE_handler(int32_t* esp)
 	struct file* file = flist_get_process_file(fd);
 	if(file != NULL){
 		retVal = file_write(file, buffer, len);
-		//printf("\n\nFile with fd %i found, retVal: %i, len: %i\n", fd, retVal, len);
-	}  else{
-		//printf("\nCouldnt find file with FD %i\n", fd);
-
 	}
 	
   }
@@ -151,11 +217,6 @@ int SYS_REMOVE_handler(int32_t* esp)
   int retVal = -1;
 
   char *name = (char*)*(esp + 1);
-  /*if(fd > 1){
-
-	/// A file descriptor has been used.
-	//flist_remove_process_file(fd);	
-  }*/
   retVal = filesys_remove(name);
 
   return retVal;
@@ -169,7 +230,6 @@ int SYS_CLOSE_handler(int32_t* esp)
 
   int fd = *(esp + 1);
   if(fd > 1){
-
 	// A file descriptor has been used.
 	flist_remove_process_file(fd);
 	
@@ -235,12 +295,12 @@ int SYS_FILESIZE_handler(int32_t* esp)
 
 int SYS_EXEC_handler(int32_t* esp)
 {
-	
-    char *command_line = (char*)*(esp + 1);
-	int retVal = 0;
-	
-    retVal = process_execute(command_line);	
-	return retVal;
+    if(verify_variable_length(esp[1]) == false){
+	sys_exit(-1);
+    }
+    char *command_line = esp[1];//(char*)*(esp + 1);
+    int retVal = process_execute(command_line);	
+    return retVal;
 }
 
 
@@ -304,8 +364,38 @@ syscall_handler (struct intr_frame *f)
 
     --------------------------------------
   */
+   if(esp == NULL || verify_fix_length(esp, sizeof(esp)) == false){
+	sys_exit(-1);
+   }
+
+
+  if(pagedir_get_page(thread_current()->pagedir, esp) == NULL){
+	sys_exit(-1);
+   } 
 
   int32_t syscall_nr = *esp;
+  if(syscall_nr < 0 || syscall_nr >= SYS_NUMBER_OF_CALLS){
+	sys_exit(-1);
+  }
+
+  // Make sure our data is not overwriting PHYS_BASE.
+  int expected_args = argc[syscall_nr];
+  unsigned long highest_addr = esp + (expected_args * sizeof(int));
+  if(highest_addr >= PHYS_BASE){
+	sys_exit(-1);
+  }  
+
+
+/*
+  int i = 1;
+  for(; i <= expected_args; i++){
+	if(verify_fix_length(&esp[i], sizeof(int) ) == false){
+		sys_exit(-1);
+	}
+      
+  }
+	*/
+
   DEBUG_SYSCALL("# SYSCALL received = %s\n", get_system_call_name(syscall_nr));
   
   
@@ -317,22 +407,26 @@ syscall_handler (struct intr_frame *f)
       break;
     case SYS_EXEC:
     {
-      f->eax = SYS_EXEC_handler(esp);
+
+      	f->eax = SYS_EXEC_handler(esp);
     }
     break;
   
     case SYS_WAIT:
     {
-    
+      
       int child_pid = *(esp + 1);
+      
       f->eax = process_wait (child_pid);
       break; 
     }
   
     case SYS_EXIT:
     {
+      if(is_kernel_vaddr(pg_round_up((void*)esp[1]) )){
+	sys_exit(-1);
+      }
       int exit_status = *(esp + 1);
-      // printf("SYS_EXIT: exit status for PID %d: %d\n", thread_current()->pid, exit_status);
       process_exit(exit_status);
       thread_exit();
       break;
@@ -342,14 +436,20 @@ syscall_handler (struct intr_frame *f)
     break;
     case SYS_CREATE:
       {
-        //TODO: should filesys_init in filesys.c be called first, or does the
-        //system handle this?
-
         bool success = false;
 
-        char *name = (char*)*(esp + 1); //TODO: cast to (char*)? Why?
+        char *name = (char*)*(esp + 1);
+	if(name == NULL){
+		sys_exit(-1);
+	}
         unsigned initial_size = *(esp + 2);
 
+	if(verify_fix_length(esp[1], initial_size) == false){
+		sys_exit(-1);
+	}
+	if(verify_variable_length(esp[1]) == false){
+		sys_exit(-1);
+	}
         success = filesys_create(name, initial_size);
 
         if(success) {
@@ -365,6 +465,14 @@ syscall_handler (struct intr_frame *f)
     case SYS_OPEN:
       {
         char *name = (char*)*(esp + 1);
+	if(name == NULL){
+		sys_exit(-1);
+	}
+	if(verify_variable_length(esp[1]) == false){
+		sys_exit(-1);
+	}
+
+
         struct file *file;
         file = filesys_open(name);
 

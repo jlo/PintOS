@@ -89,7 +89,7 @@ inode_create (disk_sector_t sector, off_t length)
 
   
   disk_inode = calloc (1, sizeof *disk_inode);
-  lock_acquire(&g_inode_lock);
+  //lock_acquire(&g_inode_lock);
 
   if (disk_inode != NULL)
     {
@@ -114,7 +114,7 @@ inode_create (disk_sector_t sector, off_t length)
       
     }
 
-      lock_release(&g_inode_lock);
+    // lock_release(&g_inode_lock);
   return success;
 }
 
@@ -197,7 +197,7 @@ inode_close (struct inode *inode)
     return;
 
   lock_acquire(&g_inode_lock);
-  //lock_acquire(&inode->lock);
+  lock_acquire(&inode->lock);
   // lock_acquire, lokalt (inode->lock)
 
   /* Release resources if this was the last opener. */
@@ -215,7 +215,7 @@ inode_close (struct inode *inode)
         }
       
 
-      //lock_release(&inode->lock);
+      lock_release(&inode->lock);
       lock_release(&g_inode_lock);
       
       free (inode);
@@ -227,7 +227,7 @@ inode_close (struct inode *inode)
 
    //lock_release(&inode->lock);
    // release inode->lock
-	//lock_release(&inode->lock);
+	lock_release(&inode->lock);
       lock_release(&g_inode_lock);
       
       //lock_release(&g_inode_lock);

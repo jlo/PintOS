@@ -1,4 +1,18 @@
 
+threads/boundedbuffer.c,87
+void bb_init(15,448
+void bb_destroy(21,550
+int bb_read(26,631
+void bb_write(32,720
+
+threads/boundedbuffer.h,79
+#define BOUNDEDBUFFER_H9,206
+struct bounded_buffer 13,259
+  int size;14,283
+
+threads/copyright.h,42
+static char *copyright copyright23,1095
+
 threads/flags.h,75
 #define THREADS_FLAGS_H2,24
 #define FLAG_MBS 5,72
@@ -12,19 +26,19 @@ bool power_off_when_done 50,1116
 bool force_off_when_done 52,1192
 int thread_create_limit 54,1285
 int main 67,1575
-ram_init 137,2928
-paging_init 162,3880
-read_command_line 198,5011
-parse_options 233,5756
-run_task 272,6934
-run_actions 288,7274
-  struct action 291,7322
-      char *name;name293,7345
-      int argc;294,7404
-      void (*function)function295,7484
-usage 339,8544
-power_off 382,10288
-print_stats 408,10774
+ram_init 142,2978
+paging_init 167,3930
+read_command_line 203,5061
+parse_options 238,5806
+run_task 277,6984
+run_actions 293,7324
+  struct action 296,7372
+      char *name;name298,7395
+      int argc;299,7454
+      void (*function)function300,7534
+usage 344,8594
+power_off 387,10338
+print_stats 413,10824
 
 threads/init.h,51
 #define THREADS_INIT_H2,23
@@ -287,83 +301,102 @@ struct condition 34,865
     struct list waiters;36,887
 #define barrier(49,1341
 
-threads/thread.c,1662
-#define THREAD_MAGIC 21,529
-static struct list ready_list;25,679
-static struct thread *idle_thread;idle_thread28,730
-static struct thread *initial_thread;initial_thread31,822
-static struct lock tid_lock;34,896
-struct kernel_thread_frame 37,965
-    void *eip;eip39,997
-    thread_func *function;function40,1051
-    void *aux;aux41,1107
-static long long idle_ticks;45,1198
-static long long kernel_ticks;46,1265
-static long long user_ticks;47,1339
-#define TIME_SLICE 50,1431
-static unsigned thread_ticks;51,1507
-bool thread_mlfqs;56,1744
-static bool is_thread 64,2025
-init_thread 104,3280
-thread_start 123,3789
-thread_tick 140,4252
-thread_print_stats 161,4617
-thread_create 183,5577
-thread_block 241,7113
-thread_unblock 259,7652
-thread_name 274,7979
-thread_current 283,8207
-thread_tid 300,8667
-thread_exit 308,8816
-thread_yield 328,9305
-thread_set_priority 345,9677
-thread_get_priority 352,9817
-thread_set_nice 359,9945
-thread_get_nice 366,10065
-thread_get_load_avg 374,10188
-thread_get_recent_cpu 382,10329
-idle 398,10903
-kernel_thread 428,11827
-running_thread 439,12162
-is_thread 453,12606
-alloc_frame 461,12813
-next_thread_to_run 477,13328
-schedule_tail 502,14215
-schedule 539,15269
-allocate_tid 556,15666
-uint32_t thread_stack_ofs 570,15941
-static unsigned DEBUG_thread_alive_count;576,16059
-static struct lock DEBUG_thread_alive_lock;577,16101
-static struct condition DEBUG_thread_alive_cond;578,16145
-void DEBUG_thread_init(580,16195
-void DEBUG_thread_count_up(587,16364
-void DEBUG_thread_count_down(595,16593
-void DEBUG_thread_poweroff_check(604,16893
-bool DEBUG_thread_create_simulate_fail(633,17775
+threads/synchlist.c,105
+void sl_init(29,978
+void sl_destroy(42,1337
+void sl_append(63,1944
+void *sl_remove(sl_remove83,2646
 
-threads/thread.h,626
+threads/synchlist.h,204
+struct SynchList 24,773
+  struct list sl_list;25,792
+  struct lock sl_lock;26,815
+  struct condition sl_empty;27,838
+struct SL_element30,871
+  struct list_elem elem;32,891
+  void *item;item33,916
+
+threads/thread.c,1664
+#define THREAD_MAGIC 22,557
+static struct list ready_list;26,707
+static struct thread *idle_thread;idle_thread29,758
+static struct thread *initial_thread;initial_thread32,850
+static struct lock tid_lock;35,924
+struct kernel_thread_frame 38,993
+    void *eip;eip40,1025
+    thread_func *function;function41,1079
+    void *aux;aux42,1135
+static long long idle_ticks;46,1226
+static long long kernel_ticks;47,1293
+static long long user_ticks;48,1367
+#define TIME_SLICE 51,1459
+static unsigned thread_ticks;52,1535
+bool thread_mlfqs;57,1772
+static bool is_thread 65,2053
+init_thread 105,3308
+thread_start 131,3917
+thread_tick 148,4380
+thread_print_stats 169,4745
+thread_create 191,5705
+thread_block 249,7243
+thread_unblock 267,7782
+thread_name 282,8109
+thread_current 291,8337
+thread_tid 308,8797
+thread_exit 316,8946
+thread_yield 335,9436
+thread_set_priority 352,9808
+thread_get_priority 359,9948
+thread_set_nice 366,10076
+thread_get_nice 373,10196
+thread_get_load_avg 381,10319
+thread_get_recent_cpu 389,10460
+idle 405,11034
+kernel_thread 435,11958
+running_thread 446,12293
+is_thread 460,12737
+alloc_frame 468,12944
+next_thread_to_run 484,13459
+schedule_tail 509,14346
+schedule 546,15400
+allocate_tid 563,15797
+uint32_t thread_stack_ofs 577,16072
+static unsigned DEBUG_thread_alive_count;583,16190
+static struct lock DEBUG_thread_alive_lock;584,16232
+static struct condition DEBUG_thread_alive_cond;585,16276
+void DEBUG_thread_init(587,16326
+void DEBUG_thread_count_up(594,16495
+void DEBUG_thread_count_down(602,16724
+void DEBUG_thread_poweroff_check(611,17024
+bool DEBUG_thread_create_simulate_fail(640,17906
+
+threads/thread.h,770
 #define THREADS_THREAD_H2,25
-enum thread_status11,177
-    THREAD_RUNNING,13,200
-    THREAD_READY,14,246
-    THREAD_BLOCKED,15,306
-    THREAD_DYING 16,369
-typedef int tid_t;21,510
-#define TID_ERROR 22,529
-#define PRI_MIN 25,624
-#define PRI_DEFAULT 26,687
-#define PRI_MAX 27,751
-struct thread85,3506
-    tid_t tid;88,3553
-    enum thread_status status;89,3618
-    char name[name90,3678
-    uint8_t *stack;stack91,3755
-    int priority;92,3822
-    struct list_elem elem;95,3926
-    uint32_t *pagedir;pagedir101,4117
-    unsigned magic;105,4216
-typedef void thread_func 119,4592
-void thread_exit 129,4870
+enum thread_status15,259
+    THREAD_RUNNING,17,282
+    THREAD_READY,18,328
+    THREAD_BLOCKED,19,388
+    THREAD_DYING 20,451
+typedef int tid_t;25,592
+#define TID_ERROR 26,611
+#define PRI_MIN 29,706
+#define PRI_DEFAULT 30,769
+#define PRI_MAX 31,833
+struct thread90,3589
+    tid_t tid;93,3636
+    enum thread_status status;94,3701
+    char name[name95,3761
+    uint8_t *stack;stack96,3838
+    int priority;97,3905
+    struct list_elem elem;100,4009
+    struct map process_open_files;104,4174
+    int pid;105,4209
+    struct semaphore wait_sema;107,4231
+    struct thread* parent;108,4263
+    uint32_t *pagedir;pagedir113,4355
+    unsigned magic;117,4454
+typedef void thread_func 131,4830
+void thread_exit 141,5108
 
 threads/vaddr.h,434
 #define THREADS_VADDR_H2,24
@@ -382,35 +415,6 @@ is_kernel_vaddr 64,1965
 ptov 72,2140
 vtop 82,2354
 
-threads/boundedbuffer.h,79
-#define BOUNDEDBUFFER_H9,206
-struct bounded_buffer 13,259
-  int size;14,283
-
-threads/boundedbuffer.c,87
-void bb_init(15,448
-void bb_destroy(21,550
-int bb_read(26,631
-void bb_write(32,720
-
-threads/synchlist.c,105
-void sl_init(29,978
-void sl_destroy(42,1337
-void sl_append(63,1944
-void *sl_remove(sl_remove83,2646
-
-threads/copyright.h,42
-static char *copyright copyright23,1095
-
-threads/synchlist.h,204
-struct SynchList 24,773
-  struct list sl_list;25,792
-  struct lock sl_lock;26,815
-  struct condition sl_empty;27,838
-struct SL_element30,871
-  struct list_elem elem;32,891
-  void *item;item33,916
-
 userprog/exception.c,128
 static long long page_fault_cnt;9,198
 exception_init 30,941
@@ -423,6 +427,19 @@ userprog/exception.h,94
 #define PF_P 5,135
 #define PF_W 6,210
 #define PF_U 7,255
+
+userprog/flist.c,304
+static struct lock flist_lock;13,188
+void flist_init(16,221
+int flist_add_file(22,342
+struct file* flist_get_process_file(32,582
+struct file* internal_flist_get_process_file(44,840
+void flist_remove_process_file(54,1047
+void close_process_open_file(69,1393
+void flist_close_process_files(76,1488
+
+userprog/flist.h,23
+#define _FLIST_H_2,18
 
 userprog/gdt.c,324
 static uint64_t gdt[gdt25,919
@@ -446,97 +463,64 @@ userprog/gdt.h,126
 #define SEL_TSS 10,274
 #define SEL_CNT 11,332
 
-userprog/pagedir.c,342
-pagedir_create 17,470
-pagedir_destroy 28,686
-lookup_page 57,1502
-pagedir_set_page 99,2588
-pagedir_get_page 126,3285
-pagedir_clear_page 144,3755
-pagedir_is_dirty 164,4238
-pagedir_set_dirty 173,4472
-pagedir_is_accessed 193,4999
-pagedir_set_accessed 202,5243
-pagedir_activate 220,5632
-active_pd 235,6137
-invalidate_pagedir 255,6846
+userprog/list/debug.h,94
+#define __LIB_DEBUG_H2,22
+#define UNUSED 9,209
+#define ASSERT(11,250
+#define PANIC(12,290
 
-userprog/pagedir.h,32
-#define USERPROG_PAGEDIR_H2,27
+userprog/list/list.c,719
+static bool is_sorted 34,1341
+is_interior 47,1740
+is_tail 54,1923
+list_init 61,2074
+list_begin 72,2309
+list_next 82,2590
+list_end 94,2887
+list_rbegin 103,3099
+list_prev 113,3384
+list_rend 133,3926
+list_head 151,4264
+list_tail 159,4394
+list_insert 169,4630
+list_splice 184,5059
+list_push_front 209,5711
+list_push_back 217,5901
+list_remove 257,7078
+list_pop_front 268,7370
+list_pop_back 278,7627
+list_front 288,7848
+list_back 297,8040
+list_size 306,8228
+list_empty 318,8460
+swap 325,8616
+list_reverse 334,8760
+is_sorted 350,9220
+find_end_of_run 366,9733
+inplace_merge 388,10359
+list_sort 413,11085
+list_insert_ordered 454,12477
+list_unique 474,13086
+list_max 501,13865
+list_min 520,14450
 
-userprog/process.c,304
-#define HACK25,751
-void process_init(30,866
-void process_exit(39,1221
-void process_print_list(45,1394
-struct parameters_to_start_process50,1426
-  char* command_line;52,1463
-start_process(56,1501
-start_process 180,6474
-process_wait 265,9420
-process_cleanup 292,10330
-process_activate 332,11835
+userprog/list/list.h,300
+#define __LIB_KERNEL_LIST_H2,28
+struct list_elem 90,3087
+    struct list_elem *prev;prev92,3109
+    struct list_elem *next;next93,3170
+struct list 97,3245
+    struct list_elem head;99,3262
+    struct list_elem tail;100,3311
+#define list_entry(108,3649
+typedef bool list_less_func 152,5162
 
-userprog/process.h,88
-#define USERPROG_PROCESS_H2,27
-#define INFINITE_WAIT(15,345
-#define BUSY_WAIT(16,396
-
-userprog/syscall.c,74
-syscall_init 20,466
-const int argc[argc35,926
-syscall_handler 45,1096
-
-userprog/syscall.h,32
-#define USERPROG_SYSCALL_H2,27
-
-userprog/tss.c,899
-struct tss51,2307
-    uint16_t back_link,53,2322
-    void *esp0;esp054,2351
-    uint16_t ss0,55,2427
-    void *esp1;esp156,2504
-    uint16_t ss1,57,2520
-    void *esp2;esp258,2543
-    uint16_t ss2,59,2559
-    uint32_t cr3;60,2582
-    void (*eip)eip61,2600
-    uint32_t eflags;62,2624
-    uint32_t eax,63,2645
-    uint32_t eax, ecx,63,2645
-    uint32_t eax, ecx, edx,63,2645
-    uint32_t eax, ecx, edx, ebx;63,2645
-    uint32_t esp,64,2678
-    uint32_t esp, ebp,64,2678
-    uint32_t esp, ebp, esi,64,2678
-    uint32_t esp, ebp, esi, edi;64,2678
-    uint16_t es,65,2711
-    uint16_t cs,66,2733
-    uint16_t ss,67,2755
-    uint16_t ds,68,2777
-    uint16_t fs,69,2799
-    uint16_t gs,70,2821
-    uint16_t ldt,71,2843
-    uint16_t trace,72,2866
-    uint16_t trace, bitmap;72,2866
-static struct tss *tss;tss76,2918
-tss_init 80,2982
-tss_get 93,3321
-tss_update 102,3476
-
-userprog/tss.h,28
-#define USERPROG_TSS_H2,23
-
-userprog/flist.h,21
-#define _MAP_H_2,16
-
-userprog/test.c,79
-typedef __SIZE_TYPE__ size_t;3,20
-strlcpy_first_word 10,208
-int main(34,597
-
-userprog/plist.h,23
-#define _PLIST_H_2,18
+userprog/list/main.c,109
+bool do_free(13,322
+void print_less(21,539
+#define LOOPS 32,783
+char* my_strdup(34,800
+int main(46,1133
 
 userprog/load.c,1503
 typedef uint32_t Elf32_Word,19,564
@@ -592,73 +576,240 @@ void dump_stack(351,10809
 userprog/load.h,29
 #define USERPROG_LOAD_H2,24
 
-filesys/directory.c,414
-struct dir 10,192
-    struct inode *inode;inode12,208
-    off_t pos;13,269
-struct dir_entry 17,371
-    disk_sector_t inode_sector;19,393
-    char name[name20,464
-    bool in_use;21,537
-dir_create 27,740
-dir_open 35,1009
-dir_open_root 55,1411
-dir_reopen 63,1605
-dir_close 70,1743
-dir_get_inode 81,1918
-lookup 92,2260
-dir_lookup 119,2960
-dir_add 142,3531
-dir_remove 185,4738
-dir_readdir 222,5519
+userprog/map.c,243
+static struct lock map_lock;9,106
+void map_init(11,136
+key_t map_insert(20,240
+struct association* find_association_by_key(40,611
+value_t map_find(56,973
+value_t map_remove(78,1264
+void map_for_each(99,1582
+void map_remove_if(116,1973
+
+userprog/map.h,240
+#define TEST2,13
+typedef void* value_t;8,101
+typedef int key_t;9,124
+struct association11,144
+	key_t key;13,165
+	value_t value;15,192
+	struct list_elem elem;17,299
+struct map20,327
+	struct list content;23,385
+	int next_key;25,459
+
+userprog/pagedir.c,342
+pagedir_create 17,470
+pagedir_destroy 28,686
+lookup_page 57,1502
+pagedir_set_page 99,2588
+pagedir_get_page 126,3285
+pagedir_clear_page 144,3755
+pagedir_is_dirty 164,4238
+pagedir_set_dirty 173,4472
+pagedir_is_accessed 193,4999
+pagedir_set_accessed 202,5243
+pagedir_activate 220,5632
+active_pd 235,6137
+invalidate_pagedir 255,6846
+
+userprog/pagedir.h,32
+#define USERPROG_PAGEDIR_H2,27
+
+userprog/plist.c,483
+static struct lock plist_lock;18,222
+void plist_init(21,255
+int plist_add_process(27,315
+void print_process(57,1192
+void plist_print_processes(66,1445
+struct process* plist_get_process(76,1739
+struct process* internal_plist_find_process_by_pid(89,2098
+bool remove(105,2482
+void plist_remove_process(128,3059
+void plist_set_exit_status(141,3382
+int plist_get_exit_status_by_pid(153,3677
+int plist_get_alive_status_by_pid(168,4020
+void plist_force_remove_process(183,4352
+
+userprog/plist.h,296
+#define _PLIST_H_2,18
+struct process9,120
+    int pid;13,219
+    int parent_pid;14,232
+    char* name;19,387
+    int exit_status;20,403
+    int alive,21,428
+    int alive, parent_alive;21,428
+    bool has_exited;22,465
+    bool should_wait;24,489
+    struct semaphore wait_sema;28,520
+
+userprog/process.c,627
+#define HACK28,779
+#define PLIST_DEBUG(31,794
+struct map process_list;35,860
+void process_init(40,986
+void process_exit(50,1366
+void process_print_list(59,1612
+struct parameters_to_start_process65,1687
+  char* command_line;67,1724
+  int proc_id;68,1746
+  struct semaphore sema;69,1761
+  struct thread* parent;70,1788
+start_process(74,1829
+#define STACK_DEBUG(209,6950
+struct main_args{main_args223,7620
+  void (*ret)ret228,7925
+  int argc;231,7978
+  char** argv;236,8101
+void* setup_main_stack(241,8147
+start_process 332,11128
+process_wait 440,14892
+process_cleanup 505,16994
+process_activate 559,18887
+
+userprog/process.h,88
+#define USERPROG_PROCESS_H2,27
+#define INFINITE_WAIT(16,412
+#define BUSY_WAIT(17,463
+
+userprog/syscall.c,491
+#define DEBUG_SYSCALL(19,457
+int verify_fix_length(24,621
+int verify_variable_length(42,1076
+syscall_init 95,2263
+void sys_exit(101,2357
+const int argc[argc116,2785
+int SYS_READ_handler(125,2942
+int SYS_WRITE_handler(173,3983
+int SYS_REMOVE_handler(206,4629
+int SYS_CLOSE_handler(223,4898
+int SYS_SEEK_handler(239,5115
+int SYS_TELL_handler(260,5561
+int SYS_FILESIZE_handler(277,5881
+int SYS_EXEC_handler(294,6207
+char* get_system_call_name(306,6375
+syscall_handler 348,7442
+
+userprog/syscall.h,32
+#define USERPROG_SYSCALL_H2,27
+
+userprog/test.c,79
+typedef __SIZE_TYPE__ size_t;3,20
+strlcpy_first_word 10,208
+int main(34,597
+
+userprog/tss.c,899
+struct tss51,2307
+    uint16_t back_link,53,2322
+    void *esp0;esp054,2351
+    uint16_t ss0,55,2427
+    void *esp1;esp156,2504
+    uint16_t ss1,57,2520
+    void *esp2;esp258,2543
+    uint16_t ss2,59,2559
+    uint32_t cr3;60,2582
+    void (*eip)eip61,2600
+    uint32_t eflags;62,2624
+    uint32_t eax,63,2645
+    uint32_t eax, ecx,63,2645
+    uint32_t eax, ecx, edx,63,2645
+    uint32_t eax, ecx, edx, ebx;63,2645
+    uint32_t esp,64,2678
+    uint32_t esp, ebp,64,2678
+    uint32_t esp, ebp, esi,64,2678
+    uint32_t esp, ebp, esi, edi;64,2678
+    uint16_t es,65,2711
+    uint16_t cs,66,2733
+    uint16_t ss,67,2755
+    uint16_t ds,68,2777
+    uint16_t fs,69,2799
+    uint16_t gs,70,2821
+    uint16_t ldt,71,2843
+    uint16_t trace,72,2866
+    uint16_t trace, bitmap;72,2866
+static struct tss *tss;tss76,2918
+tss_init 80,2982
+tss_get 93,3321
+tss_update 102,3476
+
+userprog/tss.h,28
+#define USERPROG_TSS_H2,23
+
+userprog/verify_adr.h,26
+#define VERIFY_ADR_H2,21
+
+filesys/directory.c,466
+struct lock dir_lock;11,201
+struct dir 14,243
+    struct inode *inode;inode16,259
+    off_t pos;17,320
+struct dir_entry 21,422
+    disk_sector_t inode_sector;23,444
+    char name[name24,515
+    bool in_use;25,588
+void dir_init(29,657
+dir_create 37,843
+dir_open 45,1112
+dir_open_root 69,1620
+dir_reopen 77,1814
+dir_close 84,1952
+dir_get_inode 98,2187
+lookup 109,2529
+dir_lookup 136,3229
+dir_add 162,3855
+dir_remove 216,5235
+dir_readdir 256,6073
 
 filesys/directory.h,58
 #define FILESYS_DIRECTORY_H2,28
 #define NAME_MAX 12,347
 
-filesys/file.c,306
-struct file 7,121
-    struct inode *inode;inode9,138
-    off_t pos;10,190
-file_open 17,435
-file_reopen 38,843
-file_close 45,954
-file_get_inode 56,1137
-file_read 67,1457
-file_read_at 80,1888
-file_write 93,2382
-file_write_at 108,2924
-file_length 117,3138
-file_seek 126,3331
-file_tell 136,3551
+filesys/file.c,227
+file_open 10,284
+file_reopen 31,692
+file_close 38,803
+file_get_inode 49,986
+file_read 60,1306
+file_read_at 73,1737
+file_write 86,2231
+file_write_at 101,2773
+file_length 110,2987
+file_seek 119,3180
+file_tell 129,3400
 
-filesys/file.h,28
+filesys/file.h,107
 #define FILESYS_FILE_H2,23
+struct file 8,109
+    struct inode *inode;inode10,126
+    off_t pos;11,178
 
-filesys/filesys.c,202
-struct disk *filesys_disk;filesys_disk13,301
-filesys_init 20,456
-filesys_done 38,803
-filesys_create 48,1054
-filesys_open 69,1723
-filesys_close 85,1983
-filesys_remove 95,2216
-do_format 106,2434
+filesys/filesys.c,244
+struct disk *filesys_disk;filesys_disk16,330
+static struct lock filesys_lock;18,358
+filesys_init 26,520
+filesys_done 46,898
+filesys_create 56,1149
+filesys_open 82,1891
+filesys_close 101,2218
+filesys_remove 111,2451
+do_format 125,2736
 
 filesys/filesys.h,93
 #define FILESYS_FILESYS_H2,26
 #define FREE_MAP_SECTOR 8,139
 #define ROOT_DIR_SECTOR 9,205
 
-filesys/free-map.c,248
-static struct file *free_map_file;free_map_file8,152
-static struct bitmap *free_map;free_map9,210
-free_map_init 14,329
-free_map_allocate 28,751
-free_map_release 48,1264
-free_map_open 57,1523
-free_map_close 68,1824
-free_map_create 76,1963
+filesys/free-map.c,282
+static struct file *free_map_file;free_map_file9,179
+static struct bitmap *free_map;free_map10,237
+struct lock freemap_lock;12,316
+free_map_init 16,437
+free_map_allocate 33,890
+free_map_release 55,1463
+free_map_open 68,1790
+free_map_close 83,2155
+free_map_create 91,2294
 
 filesys/free-map.h,32
 #define FILESYS_FREE_MAP_H2,27
@@ -673,35 +824,36 @@ fsutil_get 147,3971
 filesys/fsutil.h,30
 #define FILESYS_FSUTIL_H2,25
 
-filesys/inode.c,762
+filesys/inode.c,779
 #define INODE_MAGIC 12,245
-struct inode_disk16,346
-    disk_sector_t start;18,368
-    off_t length;19,433
-    unsigned magic;20,499
-    uint32_t unused[unused21,559
-bytes_to_sectors 27,723
-struct inode 33,829
-    struct list_elem elem;35,847
-    disk_sector_t sector;36,916
-    int open_cnt;37,994
-    bool removed;38,1059
-    struct inode_disk data;39,1139
-    struct lock lock;41,1201
-    struct semaphore busy;42,1278
-    int reader_count;43,1305
-byte_to_sector 51,1505
-static struct list open_inodes;62,1800
-inode_init 66,1874
-inode_create 77,2141
-inode_open 116,3289
-inode_reopen 158,4165
-inode_get_inumber 167,4315
-inode_close 176,4555
-inode_remove 204,5230
-inode_read_at 214,5527
-inode_write_at 271,7433
-inode_length 333,9448
+static struct lock g_inode_lock;14,277
+struct inode_disk18,380
+  disk_sector_t start;20,400
+  off_t length;21,463
+  unsigned magic;22,527
+  uint32_t unused[unused23,585
+bytes_to_sectors 29,745
+struct inode35,851
+  struct list_elem elem;37,866
+  disk_sector_t sector;38,933
+  int open_cnt;39,1009
+  bool removed;40,1072
+  struct inode_disk data;41,1150
+  struct lock lock;43,1210
+  struct semaphore busy;44,1285
+  int reader_count;45,1310
+byte_to_sector 53,1506
+static struct list open_inodes;64,1800
+inode_init 68,1874
+inode_create 80,2168
+inode_open 125,3383
+inode_reopen 172,4398
+inode_get_inumber 184,4619
+inode_close 193,4859
+inode_remove 239,5908
+inode_read_at 251,6268
+inode_write_at 330,8677
+inode_length 397,10835
 
 filesys/inode.h,29
 #define FILESYS_INODE_H2,24
@@ -1003,6 +1155,193 @@ lib/inttypes.h,858
 #define PRIxPTR 45,767
 #define PRIXPTR 46,788
 
+lib/kernel/bitmap.c,789
+typedef unsigned long elem_type;19,444
+#define ELEM_BITS 22,514
+struct bitmap27,719
+    size_t bit_cnt;29,737
+    elem_type *bits;bits30,783
+elem_idx 36,952
+bit_mask 44,1126
+elem_cnt 51,1292
+byte_cnt 58,1449
+last_mask 66,1686
+bitmap_create 79,2046
+bitmap_create_in_buf 100,2568
+bitmap_buf_size 115,2967
+bitmap_destroy 124,3181
+bitmap_size 137,3356
+bitmap_set 146,3523
+bitmap_mark 158,3773
+bitmap_reset 171,4222
+bitmap_flip 186,4747
+bitmap_test 199,5190
+bitmap_set_all 210,5437
+bitmap_set_multiple 219,5628
+bitmap_count 234,5998
+bitmap_contains 252,6451
+bitmap_any 269,6875
+bitmap_none 277,7113
+bitmap_all 285,7355
+bitmap_scan 297,7709
+bitmap_scan_and_flip 321,8426
+bitmap_file_size 334,8765
+bitmap_read 342,8924
+bitmap_write 357,9297
+bitmap_dump 368,9560
+
+lib/kernel/bitmap.h,65
+#define __LIB_KERNEL_BITMAP_H2,30
+#define BITMAP_ERROR 36,1307
+
+lib/kernel/console.c,440
+static struct lock console_lock;18,525
+static bool use_console_lock;31,1105
+static int console_lock_depth;57,1940
+static int64_t write_cnt;60,2019
+console_init 64,2081
+console_panic 74,2303
+console_print_stats 81,2396
+acquire_console 88,2533
+release_console 101,2801
+console_locked_by_current_thread 115,3096
+vprintf 126,3405
+puts 140,3673
+putbuf 153,3897
+putchar 163,4093
+vprintf_helper 174,4249
+putchar_have_lock 185,4501
+
+lib/kernel/console.h,36
+#define __LIB_KERNEL_CONSOLE_H2,31
+
+lib/kernel/debug.c,20
+debug_panic 15,347
+
+lib/kernel/hash.c,708
+#define list_elem_to_hash_elem(12,215
+hash_init 25,844
+hash_clear 54,1670
+hash_destroy 87,2636
+hash_insert 99,3000
+hash_replace 115,3371
+hash_find 132,3782
+hash_delete 145,4204
+hash_apply 163,4743
+hash_first 200,5648
+hash_next 219,6236
+hash_cur 241,6865
+hash_size 248,6974
+hash_empty 255,7097
+#define FNV_32_PRIME 261,7218
+#define FNV_32_BASIS 262,7249
+hash_bytes 266,7339
+hash_string 283,7659
+hash_int 299,7935
+find_bucket 306,8065
+find_elem 315,8357
+turn_off_least_1bit 330,8784
+is_power_of_2 337,8922
+#define MIN_ELEMS_PER_BUCKET 343,9035
+#define BEST_ELEMS_PER_BUCKET 344,9112
+#define MAX_ELEMS_PER_BUCKET 345,9170
+rehash 352,9481
+insert_elem 417,11430
+remove_elem 425,11614
+
+lib/kernel/hash.h,617
+#define __LIB_KERNEL_HASH_H2,28
+struct hash_elem 29,971
+    struct list_elem list_elem;31,993
+#define hash_entry(39,1314
+typedef unsigned hash_hash_func 45,1599
+typedef bool hash_less_func 50,1839
+typedef void hash_action_func 56,2071
+struct hash 59,2154
+    size_t elem_cnt;61,2171
+    size_t bucket_cnt;62,2238
+    struct list *buckets;buckets63,2309
+    hash_hash_func *hash;hash64,2376
+    hash_less_func *less;less65,2429
+    void *aux;aux66,2488
+struct hash_iterator 70,2599
+    struct hash *hash;hash72,2625
+    struct list *bucket;bucket73,2679
+    struct hash_elem *elem;elem74,2733
+
+lib/kernel/list.c,719
+static bool is_sorted 34,1344
+is_interior 47,1743
+is_tail 54,1926
+list_init 61,2077
+list_begin 72,2312
+list_next 82,2593
+list_end 94,2890
+list_rbegin 103,3102
+list_prev 113,3387
+list_rend 133,3929
+list_head 151,4267
+list_tail 159,4397
+list_insert 169,4633
+list_splice 184,5062
+list_push_front 209,5714
+list_push_back 217,5904
+list_remove 257,7081
+list_pop_front 268,7373
+list_pop_back 278,7630
+list_front 288,7851
+list_back 297,8043
+list_size 306,8231
+list_empty 318,8463
+swap 325,8619
+list_reverse 334,8763
+is_sorted 350,9223
+find_end_of_run 366,9736
+inplace_merge 388,10362
+list_sort 413,11088
+list_insert_ordered 454,12480
+list_unique 474,13096
+list_max 501,13875
+list_min 520,14460
+
+lib/kernel/list.h,300
+#define __LIB_KERNEL_LIST_H2,28
+struct list_elem 90,3087
+    struct list_elem *prev;prev92,3109
+    struct list_elem *next;next93,3170
+struct list 97,3245
+    struct list_elem head;99,3262
+    struct list_elem tail;100,3311
+#define list_entry(108,3649
+typedef bool list_less_func 152,5162
+
+lib/kernel/slist.c,410
+        struct Node7,142
+            ListElement Element;9,172
+            Position    Next;10,205
+        MakeEmpty(16,286
+        IsEmpty(32,647
+        int IsLast(40,854
+        Find(48,1036
+        Delete(65,1436
+        FindPrevious(83,1974
+        Insert(99,2363
+        DeleteList(117,2784
+        Header(132,3099
+        First(138,3185
+        Advance(144,3276
+        Retrieve(150,3375
+
+lib/kernel/slist.h,210
+        typedef void * ListElement;2,40
+        #define _SList_H5,102
+        typedef struct Node *PtrToNode;PtrToNode8,149
+        typedef PtrToNode SList;9,189
+        typedef PtrToNode Position;10,222
+
+lib/kernel/stdio.h,34
+#define __LIB_KERNEL_STDIO_H2,29
+
 lib/limits.h,528
 #define __LIB_LIMITS_H2,23
 #define CHAR_BIT 4,47
@@ -1196,7 +1535,7 @@ lib/string.h,148
 #define strncat 33,1079
 #define strtok 34,1124
 
-lib/syscall-nr.h,509
+lib/syscall-nr.h,532
 #define __LIB_SYSCALL_NR_H2,27
     SYS_HALT,8,154
     SYS_EXIT,9,219
@@ -1218,194 +1557,8 @@ lib/syscall-nr.h,509
     SYS_READDIR,29,1258
     SYS_ISDIR,30,1321
     SYS_INUMBER,31,1397
-    SYS_NUMBER_OF_CALLS33,1475
-
-lib/kernel/bitmap.c,789
-typedef unsigned long elem_type;19,444
-#define ELEM_BITS 22,514
-struct bitmap27,719
-    size_t bit_cnt;29,737
-    elem_type *bits;bits30,783
-elem_idx 36,952
-bit_mask 44,1126
-elem_cnt 51,1292
-byte_cnt 58,1449
-last_mask 66,1686
-bitmap_create 79,2046
-bitmap_create_in_buf 100,2568
-bitmap_buf_size 115,2967
-bitmap_destroy 124,3181
-bitmap_size 137,3356
-bitmap_set 146,3523
-bitmap_mark 158,3773
-bitmap_reset 171,4222
-bitmap_flip 186,4747
-bitmap_test 199,5190
-bitmap_set_all 210,5437
-bitmap_set_multiple 219,5628
-bitmap_count 234,5998
-bitmap_contains 252,6451
-bitmap_any 269,6875
-bitmap_none 277,7113
-bitmap_all 285,7355
-bitmap_scan 297,7709
-bitmap_scan_and_flip 321,8426
-bitmap_file_size 334,8765
-bitmap_read 342,8924
-bitmap_write 357,9297
-bitmap_dump 368,9560
-
-lib/kernel/bitmap.h,65
-#define __LIB_KERNEL_BITMAP_H2,30
-#define BITMAP_ERROR 36,1307
-
-lib/kernel/console.c,440
-static struct lock console_lock;18,525
-static bool use_console_lock;31,1105
-static int console_lock_depth;57,1940
-static int64_t write_cnt;60,2019
-console_init 64,2081
-console_panic 74,2303
-console_print_stats 81,2396
-acquire_console 88,2533
-release_console 101,2801
-console_locked_by_current_thread 115,3096
-vprintf 126,3405
-puts 140,3673
-putbuf 153,3897
-putchar 163,4093
-vprintf_helper 174,4249
-putchar_have_lock 185,4501
-
-lib/kernel/console.h,36
-#define __LIB_KERNEL_CONSOLE_H2,31
-
-lib/kernel/debug.c,20
-debug_panic 15,347
-
-lib/kernel/hash.c,708
-#define list_elem_to_hash_elem(12,215
-hash_init 25,844
-hash_clear 54,1670
-hash_destroy 87,2636
-hash_insert 99,3000
-hash_replace 115,3371
-hash_find 132,3782
-hash_delete 145,4204
-hash_apply 163,4743
-hash_first 200,5648
-hash_next 219,6236
-hash_cur 241,6865
-hash_size 248,6974
-hash_empty 255,7097
-#define FNV_32_PRIME 261,7218
-#define FNV_32_BASIS 262,7249
-hash_bytes 266,7339
-hash_string 283,7659
-hash_int 299,7935
-find_bucket 306,8065
-find_elem 315,8357
-turn_off_least_1bit 330,8784
-is_power_of_2 337,8922
-#define MIN_ELEMS_PER_BUCKET 343,9035
-#define BEST_ELEMS_PER_BUCKET 344,9112
-#define MAX_ELEMS_PER_BUCKET 345,9170
-rehash 352,9481
-insert_elem 417,11430
-remove_elem 425,11614
-
-lib/kernel/hash.h,617
-#define __LIB_KERNEL_HASH_H2,28
-struct hash_elem 29,971
-    struct list_elem list_elem;31,993
-#define hash_entry(39,1314
-typedef unsigned hash_hash_func 45,1599
-typedef bool hash_less_func 50,1839
-typedef void hash_action_func 56,2071
-struct hash 59,2154
-    size_t elem_cnt;61,2171
-    size_t bucket_cnt;62,2238
-    struct list *buckets;buckets63,2309
-    hash_hash_func *hash;hash64,2376
-    hash_less_func *less;less65,2429
-    void *aux;aux66,2488
-struct hash_iterator 70,2599
-    struct hash *hash;hash72,2625
-    struct list *bucket;bucket73,2679
-    struct hash_elem *elem;elem74,2733
-
-lib/kernel/list.c,719
-static bool is_sorted 34,1344
-is_interior 47,1743
-is_tail 54,1926
-list_init 61,2077
-list_begin 72,2312
-list_next 82,2593
-list_end 94,2890
-list_rbegin 103,3102
-list_prev 113,3387
-list_rend 133,3929
-list_head 151,4267
-list_tail 159,4397
-list_insert 169,4633
-list_splice 184,5062
-list_push_front 209,5714
-list_push_back 217,5904
-list_remove 257,7081
-list_pop_front 268,7373
-list_pop_back 278,7630
-list_front 288,7851
-list_back 297,8043
-list_size 306,8231
-list_empty 318,8463
-swap 325,8619
-list_reverse 334,8763
-is_sorted 350,9223
-find_end_of_run 366,9736
-inplace_merge 388,10362
-list_sort 413,11088
-list_insert_ordered 454,12480
-list_unique 474,13096
-list_max 501,13875
-list_min 520,14460
-
-lib/kernel/list.h,300
-#define __LIB_KERNEL_LIST_H2,28
-struct list_elem 90,3087
-    struct list_elem *prev;prev92,3109
-    struct list_elem *next;next93,3170
-struct list 97,3245
-    struct list_elem head;99,3262
-    struct list_elem tail;100,3311
-#define list_entry(108,3649
-typedef bool list_less_func 152,5162
-
-lib/kernel/stdio.h,34
-#define __LIB_KERNEL_STDIO_H2,29
-
-lib/kernel/slist.c,410
-        struct Node7,142
-            ListElement Element;9,172
-            Position    Next;10,205
-        MakeEmpty(16,286
-        IsEmpty(32,647
-        int IsLast(40,854
-        Find(48,1036
-        Delete(65,1436
-        FindPrevious(83,1974
-        Insert(99,2363
-        DeleteList(117,2784
-        Header(132,3099
-        First(138,3185
-        Advance(144,3276
-        Retrieve(150,3375
-
-lib/kernel/slist.h,210
-        typedef void * ListElement;2,40
-        #define _SList_H5,102
-        typedef struct Node *PtrToNode;PtrToNode8,149
-        typedef PtrToNode SList;9,189
-        typedef PtrToNode Position;10,222
+    SYS_PLIST,34,1506
+    SYS_NUMBER_OF_CALLS36,1526
 
 lib/user/console.c,235
 vprintf 9,174
@@ -1431,7 +1584,7 @@ lib/user/stdio.h,50
 #define __LIB_USER_STDIO_H2,27
 int hprintf 4,55
 
-lib/user/syscall.c,416
+lib/user/syscall.c,436
 #define syscall0(6,146
 #define syscall1(19,850
 #define syscall2(33,1720
@@ -1456,6 +1609,7 @@ mkdir 163,4734
 readdir 169,4804
 isdir 175,4907
 inumber 181,4967
+int plist(187,5028
 
 lib/user/syscall.h,247
 #define __LIB_USER_SYSCALL_H2,29
@@ -1468,8 +1622,6 @@ typedef int mapid_t;12,206
 #define EXIT_FAILURE 20,476
 void halt 23,587
 
-userprog/plist.c,0
-
-userprog/flist.c,0
+userprog/verify_adr.c,0
 
 threads/kernel.lds.S,0

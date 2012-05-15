@@ -103,10 +103,10 @@ struct thread
     // processes opened files
     struct map process_open_files;
     int pid;
-        
+      /*  
     struct semaphore wait_sema;
     struct thread* parent;
-    
+    */
     
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

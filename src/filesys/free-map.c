@@ -56,11 +56,11 @@ free_map_release (disk_sector_t sector, size_t cnt)
 {
   ASSERT (bitmap_all (free_map, sector, cnt));
   
-  lock_acquire(&freemap_lock);
+  //lock_acquire(&freemap_lock);
   bitmap_set_multiple (free_map, sector, cnt, false);
   bitmap_write (free_map, free_map_file);
   
-  lock_release(&freemap_lock);
+  //lock_release(&freemap_lock);
 }
 
 /* Opens the free map file and reads it from disk. */
@@ -68,14 +68,15 @@ void
 free_map_open (void) 
 {
 
-  lock_acquire(&freemap_lock);
+  
+//lock_acquire(&freemap_lock);
   free_map_file = file_open (inode_open (FREE_MAP_SECTOR));
   if (free_map_file == NULL)
     PANIC ("can't open free map");
   if (!bitmap_read (free_map, free_map_file))
     PANIC ("can't read free map");
 
-  lock_release(&freemap_lock);
+  //lock_release(&freemap_lock);
 }
 
 /* Writes the free map to disk and closes the free map file. */

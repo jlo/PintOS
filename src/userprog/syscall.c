@@ -216,6 +216,10 @@ int SYS_REMOVE_handler(int32_t* esp)
   // Default to error...
   int retVal = -1;
 
+  // kolla minnet
+  if(verify_variable_length(esp[1]) == false){
+	sys_exit(-1);
+    }
   char *name = (char*)*(esp + 1);
   retVal = filesys_remove(name);
 
@@ -339,12 +343,7 @@ char* get_system_call_name(int32_t syscall_number)
     return system_calls[syscall_number];
   }
   return "Unknown syscall";
-}
-
-
-
-
-       
+}    
 
 static void
 syscall_handler (struct intr_frame *f)
@@ -364,15 +363,18 @@ syscall_handler (struct intr_frame *f)
 
     --------------------------------------
   */
+
+  // verify esp pointer is ok, first parameter: current thread
    if(esp == NULL || verify_fix_length(esp, sizeof(esp)) == false){
 	sys_exit(-1);
    }
 
-
+   // esp adress belongs to thread
   if(pagedir_get_page(thread_current()->pagedir, esp) == NULL){
 	sys_exit(-1);
    } 
 
+  // ok syscall nr
   int32_t syscall_nr = *esp;
   if(syscall_nr < 0 || syscall_nr >= SYS_NUMBER_OF_CALLS){
 	sys_exit(-1);
@@ -383,10 +385,13 @@ syscall_handler (struct intr_frame *f)
   unsigned long highest_addr = esp + (expected_args * sizeof(int));
   if(highest_addr >= PHYS_BASE){
 	sys_exit(-1);
-  }  
+  }
+  
+  if(pagedir_get_page(thread_current()->pagedir, highest_addr) == NULL){
+	sys_exit(-1);
+  }
 
-
-/*
+  /*
   int i = 1;
   for(; i <= expected_args; i++){
 	if(verify_fix_length(&esp[i], sizeof(int) ) == false){
